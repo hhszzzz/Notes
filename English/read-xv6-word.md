@@ -1,0 +1,33 @@
+- indirection：间接
+- mechanism：机制，机械装置
+- manipulate：操纵，控制
+- configuration：结构，配置，构造
+- logically：逻辑上地
+- granularity：粒度，（颗）粒性
+- aligned：排整齐，校准
+- chunks：大块，厚片
+- format：格式，设计
+- omit：省略，忽略
+- in the common case：一般情况下
+- interpret：解释，说明
+- execute：执行，实施
+- supervisor：（指导者）；（主管）
+- generate：生成，产生，引起
+- subsequent：后来的，随后的
+- layout：布局，设计，安排
+- constants：常数，常量（constant：不断的，持续的）
+- simulate：假装，冒充，模拟
+- disk：磁盘，磁碟
+- overflow：溢出，漫出
+- while：虽然
+- alternate：（n.候补，代替者）；（v.交替）；（a.交替的，轮流的）
+- involve：涉及，包含，影响，加入
+- reside：居住于，定居于
+- sequence：序列
+- extract：提取，摘录
+- indices：索引，标志
+- mimics：模仿
+- at the time：在一定时间
+- fetch：取来；拿来
+- descend：下来，下去，下降
+- as：当
