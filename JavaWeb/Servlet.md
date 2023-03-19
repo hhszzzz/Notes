@@ -1,12 +1,16 @@
 # 八、Servlet
 
+## 000-新建一个Servlet
+
+> 右键-新建-找到Servlet
+>
+> 如果找不到，在Project Structure-Facts，勾选最下面的Source Roots的一个条目，然后就有啦
+
 ## 001-Servlet技术
 
-```
-可以查看帮助文档
-```
+> 帮助文档
 
-![在这里插入图片描述](https://img-blog.csdnimg.cn/55c27caa47274de28904fd65430122bf.png)  
+![在这里插入图片描述](https://img-blog.csdnimg.cn/55c27caa47274de28904fd65430122bf.png) 
 ![在这里插入图片描述](https://img-blog.csdnimg.cn/3a8ef5ebed234241b70e3ff549b151c4.png?x-oss-process=image/watermark,type_d3F5LXplbmhlaQ,shadow_50,text_Q1NETiBAS0stR3JleXNvbg==,size_20,color_FFFFFF,t_70,g_se,x_16)
 
 ### （1）什么是Servlet？
@@ -472,6 +476,12 @@ public class HelloServlet2 extends HttpServlet {
 > 2、一个 web 工程，只有一个 `ServletContext` 对象实例。
 > 3、`ServletContext` 对象是一个域对象。
 >
+> 4、用于服务器封装当前Web的应用环境，即**整个web.xml文档**
+>
+> <img src="images/1679208543150.png" style="zoom:67%;" />
+>
+> 
+>
 > 什么是域对象?
 > 域对象，是可以像 Map 一样存取数据的对象，叫域对象。
 > 这里的域指的是存取数据的操作范围，整个 web 工程。
@@ -485,6 +495,10 @@ public class HelloServlet2 extends HttpServlet {
 ### （2）ServletContext类的四个作用
 
 > 1、获取 `web.xml` 中配置的上下文参数 `context-param`（只能是`ServletContext` 获取，`ServletConfig`不行）
+>
+> - 通过`getInitParameter("key")`：读 web.xml文件中`<context-param>`中`<param-name>`对应配置内容
+> - `context.getInitParameterNames()`：读 web.xml文件中所有`<param-name>`标签中的值
+>
 > 2、获取当前的工程路径，格式："  /工程路径  "
 > 3、获取工程部署后在服务器硬盘上的绝对路径
 >
@@ -493,6 +507,32 @@ public class HelloServlet2 extends HttpServlet {
 > 无论在这个工程下写了几个类，创建了几个`ServletContext` 对象，都是同一个`ServletContext` 对象
 > 在工程停止之前，存数据，不同类中的`ServletContext `对象 都能访问到数据（同一个数据）
 > 工程停止之后，数据就没了
+
+### 1）有关ServletContext路径的问题
+
+> 前文提到，`ServletContext`获取路径有两种方法
+>
+> 首先假设你在浏览器的请求路径是：
+>
+> `http://localhost:8080/Servlet/main/list.jsp`
+>
+> - `getContextPath()`：获取当前的工程路径，格式: /工程路径
+>
+>   打印结果：/Servlet
+>
+>   注意：`request`请求头和`ServletContext`对象都有这个方法，区别在于域不同
+>
+> - `getRealPath("path")`：返回资源文件的绝对路径，可将相对路径转换为绝对路径
+>
+>   `getRealPath("/")`：工程部署后在硬盘上的绝对路径（文件真实路径）
+>
+>   打印结果：E:\Tomcat 9.0\webapps\news\test
+>
+>   是用于获取当前 Web 应用的根目录的真实路径，其中的 "/" 表示 Web 应用的根目录。
+>   
+>   在调用该方法时，如果传入的参数为 "/"，则表示获取 Web 应用的根目录的真实路径；如果传入的参数为其他路径，例如 "/WEB-INF"，则表示获取 Web 应用下 "WEB-INF" 目录的真实路径。
+>   
+> - `getResourceAsStream()`：直接得到资源文件的输入流
 
 ```java
 package com.atguigu.servlet;
@@ -701,6 +741,8 @@ public class ServletContext2 extends HttpServlet {
 > `rtf`文件是二进制格式
 >
 > `.gz`和`.tar`是`Linux`常用的压缩格式
+>
+> `.png`原来是背景透明的
 
 ### （6）谷歌和火狐浏览器如何查看http协议(请求与响应)
 
@@ -769,6 +811,7 @@ public class RequestAPIServlet extends HttpServlet {
 
     //getHeader()           获取请求头
     System.out.println("请求头中的User-Agent =>" + request.getHeader("User-Agent"));
+    // 获取浏览器的信息（限制使用某个浏览器）
 
     //getMethod() 				  获取请求的方式 GET 或 POST
     System.out.println("请求的方式 =>" + request.getMethod());//在地址栏敲回车是get请求
@@ -794,7 +837,7 @@ public class RequestAPIServlet extends HttpServlet {
 > getParameter()
 > getParameterValues()
 > ```
-> 填写表单提交给服务器
+> 填写表单提交给服务器，通过提取`name`属性的值来访问对应的值
 >
 
 ```java
@@ -868,9 +911,15 @@ public class ParameterServlet extends HttpServlet {
 > ```java
 > req.setCharacterEncoding("UTF-8"); 		这行代码要写在获取参数之前才有用
 > ```
->
+> 
 
 ![在这里插入图片描述](https://img-blog.csdnimg.cn/c18e1927997a4e7cb1e9daaf98793d31.png?x-oss-process=image/watermark,type_d3F5LXplbmhlaQ,shadow_50,text_Q1NETiBAS0stR3JleXNvbg==,size_20,color_FFFFFF,t_70,g_se,x_16)
+
+### 关于为什么doPost出现乱码而doGet不会的解释
+
+首先放一段与chatGPT的聊天来解释
+
+<img src="images/1679153210101.jpg" style="zoom: 80%;" />
 
 ### （5）请求的转发
 
@@ -1010,6 +1059,20 @@ href 属性就是参数的地址值
 ### （7）Web 中的相对路径和绝对路径
 
 ![在这里插入图片描述](https://img-blog.csdnimg.cn/994cba7b157b4a74b56d4642751e6ba4.png?x-oss-process=image/watermark,type_d3F5LXplbmhlaQ,shadow_50,text_Q1NETiBAS0stR3JleXNvbg==,size_20,color_FFFFFF,t_70,g_se,x_16)
+
+> 那么如果要访问资源，一般有两种方式
+>
+> <img src="images/1679153456531.png" style="zoom:67%;" />
+>
+> - 绝对路径
+>
+>   如果在编辑配置里的`Deployment`的默认路径是`/`，那么`/Test`没有问题
+>
+>   但是如果默认路径是`/xxx`，那么此时如果还继续通过`/Test`访问，就会失败
+>
+> - 相对路径
+>
+>   貌似**只需要你指定访问的文件名即可**
 
 ### （8）web 中 / 斜杠的不同意义
 
@@ -1164,3 +1227,25 @@ public class Response2 extends HttpServlet {
 > `Tomcat`每次发起请求都会重新产生一个`Request`对象
 
 ![在这里插入图片描述](https://img-blog.csdnimg.cn/1ea461df5e1c4376a7b5ce39dab9b58c.png?x-oss-process=image/watermark,type_d3F5LXplbmhlaQ,shadow_50,text_Q1NETiBAS0stR3JleXNvbg==,size_20,color_FFFFFF,t_70,g_se,x_16)
+
+### （6）文件下载和上传
+
+> ```java
+> respone.addHeader("Content-Disposition", "attachment;filename="+文件名)
+> ```
+>
+> `Content-Disposition:attachment:`标识该文件在浏览器中不显示而直接做下载处理
+>
+> `filename`=文件名：表示指定下载文件的文件名
+>
+> 如果文件名是中午，则需要`new String(file.getName().getBytes("GBK"), "ISO-8859-1")`对中文进行指定的解码方式解码，再按照Tomcat指定的方式解码。
+
+### （7）修改响应头的参数
+
+> ```
+> setStatus(404/302...)			设置状态
+> sendError(404/500...)			返回错误信息
+> setHeader("server", "JBoss")	设置服务器类型
+> ```
+>
+> 
