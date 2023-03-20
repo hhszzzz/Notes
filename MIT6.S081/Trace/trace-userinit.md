@@ -45,7 +45,9 @@ userinit(void)
 
 <img src="images/1678708440209.png" style="zoom: 80%;" />
 
-#### [todo][]（查询trapframe）
+#### [todo][]（查询trapframe）我找到了！
+
+- (kernel/proc.h:44)，不过现在不是研究这个的时候哈
 
 ## uvminit函数
 
@@ -264,7 +266,9 @@ void *memmove(void *dest, const void *src, size_t n);
   `initcode`的作用：其实就是一段汇编语言
 
   <img src="images/1679233103067.png" style="zoom: 80%;" />
-
-
+  
+  但是我在proc.c当中又发现了一个initcode数组，目前还不知道是做什么的
+  
+  <img src="../xv6%E5%8F%82%E8%80%83%E6%89%8B%E5%86%8C/images/1679296431415.png" style="zoom:80%;" />
 
 # 现在终于又能分析userinit的代码了

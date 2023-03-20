@@ -35,3 +35,5 @@
 - at some point later：在以后的某个时刻，稍后
 - in the meantime：在这期间
 - restore：恢复
+- mutual：互相的，相互的，彼此的
+- exclude：排除，不包括（exclusion：排斥）
