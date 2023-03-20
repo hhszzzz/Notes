@@ -83,16 +83,16 @@
 > **创建地址空间的流程** 
 > 在启动序列的早期，`main`调用`kvminit`(kernel/vm.c:22)来创建内核的页表。此调用发生在xv6启用RISC-V的分页之前，因此地址直接引用物理内存。`kvminit`首先分配一个物理内存page来保存根页表page。然后它调用`kvmmap`来提供内核需要的映射，包括内核的指令和数据、物理内存以及实际上是设备的内存范围。  
 > **kvmmap**  **（映射虚拟地址）**
-> `kvmmap`(kernel/vm.c:118)调用`mappages`(kernel/vm.c:149)，它将虚拟地址范围到相应物理地址范围的映射加入到页表中。它以page间隔为范围内的每个虚拟地址单独执行此操作。对于每个要映射的虚拟地址，`mappages` 调用`walk`来查找该地址的PTE地址。然后它初始化PTE以保存相关的物理页号、所需的权限(`PTE_W`、`PTE_X`、`PTE_R`)和`PTE_V`以将PTE标记为有效(kernel/vm.c:161)。  
+> `kvmmap`(kernel/vm.c:118)调用`mappages`(kernel/vm.c:149)，它将虚拟地址范围到相应物理地址范围的映射加入到页表中。它以page间隔为范围内的每个虚拟地址单独执行此操作。对于每个要映射的虚拟地址，`mappages` 调用`walk`来查找该地址的PTE地址。然后它初始化PTE以保存相关的物理页号、所需的权限(`PTE_W`、`PTE_X`、`PTE_R`)和`PTE_V`以将PTE标记为有效(kernel/vm.c:161)。 
 > **walk**  **（查找第三级页表PTE的地址）**
-> `walk`(kernel/vm.c:72)实现类似于RISC-V分页硬件的功能，即在PTE中查找虚拟地址对应的物理地址(见图3.2)。`walk`每次将3级页表下移动9位。它使用每一级的9位虚拟地址来查找下一级页表或最后一页(kernel/vm.c:78)的PTE。如果PTE无效，则说明需要的页面尚未分配。如果设置了`alloc`参数，`walk`将分配一个新的页表page并将其物理地址放入PTE。它返回树中最低层的PTE地址(kernel/vm.c:88)。  
-> 注：上面的代码依赖于直接映射到内核虚拟地址空间的物理内存。例如，当`walk`从页表的各个级别向下移动时，它会从PTE(kernel/vm.c:80)中提取下一级页表的(物理)地址，然后将该地址用作虚拟地址获取下一层的PTE(kernel/vm.c:78)。  
+> `walk`(kernel/vm.c:72)实现类似于RISC-V分页硬件的功能，即在PTE中查找虚拟地址对应的物理地址(见图3.2)。`walk`每次将3级页表下移动9位。它使用每一级的9位虚拟地址来查找下一级页表或最后一页(kernel/vm.c:78)的PTE。如果PTE无效，则说明需要的页面尚未分配。如果设置了`alloc`参数，`walk`将分配一个新的页表page并将其物理地址放入PTE。它返回树中最低层的PTE地址(kernel/vm.c:88)。 
+> 注：上面的代码依赖于直接映射到内核虚拟地址空间的物理内存。例如，当`walk`从页表的各个级别向下移动时，它会从PTE(kernel/vm.c:80)中提取下一级页表的(物理)地址，然后将该地址用作虚拟地址获取下一层的PTE(kernel/vm.c:78)。 
 > **kvminithart**  **（将根页表写入寄存器satp）**
-> `main`调用`kvminithart`(kernel/vm.c:53)来安装内核页表。它将根页表page的物理地址写入寄存器`satp`。此后，CPU将使用内核页表转换地址。由于内核使用直接映射，下一条指令的当前虚拟地址将映射到正确的物理内存地址。  
+> `main`调用`kvminithart`(kernel/vm.c:53)来安装内核页表。它将根页表page的物理地址写入寄存器`satp`。此后，CPU将使用内核页表转换地址。由于内核使用直接映射，下一条指令的当前虚拟地址将映射到正确的物理内存地址。 
 > **procinit**  **（初始化进程相关的数据结构，如分配内核堆栈）**
-> 从`main`调用的`procinit`(kernel/proc.c:26)为每个进程分配一个内核堆栈。它将每个堆栈映射到由`KSTACK`（常量，在xv6中内核堆栈的大小为8KB，`KSTACK`的值为8192）生成的虚拟地址，从而为无效的堆栈保护页面留出空间。`kvmmap`将映射PTE添加到内核页表中，并且对`kvminithart`的调用将内核页表重新加载到`satp`中，以便硬件知道新的PTE。  
+> 从`main`调用的`procinit`(kernel/proc.c:26)为每个进程分配一个内核堆栈。它将每个堆栈映射到由`KSTACK`生成的虚拟地址，从而为无效的堆栈保护页面留出空间。`kvmmap`将映射PTE添加到内核页表中，并且对`kvminithart`的调用将内核页表重新加载到`satp`中，以便硬件知道新的PTE。 
 > **TLB**  **（缓存，存储最近访问的虚拟地址到物理地址的转换结果，用于加速内存访问）**
-> 每个RISC-V CPU都将页表条目缓存在**TLB**(Translation Look Aside Buffer)中，当xv6更改页表时，它必须告诉CPU使相应的缓存TLB条目无效。如果没有，那么稍后TLB可能会使用旧的缓存映射，指向同时已分配给另一个进程的物理page。结果，一个进程可能占用一些其他进程的内存。RISC-V 有一条指令`sfence.vma`刷新当前CPU的TLB。xv6在重新加载satp寄存器后在`kvminithart`中执行`sfence.vma`，在返回用户空间之前在切换到用户页表的 `trampoline` 代码中执行 `sfence.vma`(kernel/trampoline.S:79)。
+> 每个RISC-V CPU都将页表条目缓存在**TLB**(Translation Look Aside Buffer)中，当xv6更改页表时，它必须告诉CPU使相应的缓存TLB条目无效。如果没有，那么稍后TLB可能会使用旧的缓存映射，指向在这期间已分配给另一个进程的物理page。结果，一个进程就有能力去在其他进程的内存中进行修改。RISC-V 有一条指令`sfence.vma`刷新当前CPU的TLB。xv6在重新加载satp寄存器后在`kvminithart`中执行`sfence.vma`，在返回用户空间之前在切换到用户页表的 `trampoline` 代码中执行 `sfence.vma`(kernel/trampoline.S:79)。
 
   
 

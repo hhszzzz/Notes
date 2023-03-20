@@ -16,7 +16,7 @@
 
 - ### 计算机网络
 
-  > 有[哈工大][https://www.icourse163.org/learn/HIT-154005?tid=1469984455#/learn/announce]和[中科大][[https://www.bilibili.com/video/BV1JV411t7ow/]两个版本，我目前想看中科大的版本，准备在理论课的时候看
+  > 有[哈工大](https://www.icourse163.org/learn/HIT-154005?tid=1469984455#/learn/announce)和[中科大](https://www.bilibili.com/video/BV1JV411t7ow/)两个版本，我目前想看中科大的版本，准备在理论课的时候看
   >
   > 实验部分：我想参考CSS144（苏佬也有讲解），预计看完Mit再来做
   >
@@ -25,7 +25,7 @@
 - ### Java
 
   > 一条普通的支线，预计学完前面两个才会开启。
-  > 需要按顺序学习：[SpringMVC][https://www.bilibili.com/video/BV1Ry4y1574R/] 、[Mybatis][https://www.bilibili.com/video/BV1VP4y1c7j7/?vd_source=b0ef18fb192120b7dbc97faa2dca9343] 、[MybatisPlus][https://www.bilibili.com/video/BV12R4y157Be/] 、[Maven][https://www.bilibili.com/video/BV12q4y147e4/] 、[SpringBoot2][https://www.bilibili.com/video/BV19K4y1L7MT/] 
+  > 需要按顺序学习：[SpringMVC](https://www.bilibili.com/video/BV1Ry4y1574R/) 、[Mybatis](https://www.bilibili.com/video/BV1VP4y1c7j7/?vd_source=b0ef18fb192120b7dbc97faa2dca9343) 、[MybatisPlus](https://www.bilibili.com/video/BV12R4y157Be/) 、[Maven](https://www.bilibili.com/video/BV12q4y147e4/) 、[SpringBoot2](https://www.bilibili.com/video/BV19K4y1L7MT/) 
   >
   > - 预计时间：暑假完成（毕竟暑假就适合这种比较简单的开发...我还要学车呢）
 
@@ -37,15 +37,19 @@
 
 - ### 数据库系统
 
-  > [极客时间][https://time.geekbang.org/]的`MYSQL45讲`
+  > [极客时间](https://time.geekbang.org/)的`MYSQL45讲`
+  >
+  > 分布式系统：[MIT6.824](https://www.bilibili.com/video/BV1R7411t71W/?spm_id_from=333.337.search-card.all.click)
 
 - ### 深入理解计算机系统
 
-  > CSAPP，留到大三吧！这里是[阅读指南][https://zhuanlan.zhihu.com/p/435429584]
+  > CSAPP，留到大三吧！这里是[阅读指南](https://zhuanlan.zhihu.com/p/435429584)
+  >
+  > 好像有个叫445的到时候可以看下
 
 - 编译原理
 
-- [The Missing Semester][https://www.bilibili.com/video/BV1x7411H7wa/?spm_id_from=333.788.top_right_bar_window_custom_collection.content.click&vd_source=b0ef18fb192120b7dbc97faa2dca9343]（高效使用工具）
+- [The Missing Semester](https://www.bilibili.com/video/BV1x7411H7wa/?spm_id_from=333.788.top_right_bar_window_custom_collection.content.click&vd_source=b0ef18fb192120b7dbc97faa2dca9343)（高效使用工具）
 
 - 特定领域（计算机图形学、AI、安全、System方向、分布式等）
 

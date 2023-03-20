@@ -109,24 +109,33 @@
   }
   ```
 
-  相关代码：
+  注释的意思就是，将硬件页表寄存器切换到内核页表，并启用分页机制，以便内核能够访问自己的代码和数据，并能够对进程地址空间进行管理和保护。
 
+  相关代码：
+  
   ```cpp
-  // supervisor address translation and protection;
-  // holds the address of the page table.
+  // supervisor address translation and protection; 主管地址转换和保护
+  // holds the address of the page table. 保护页表的地址
   static inline void 
   w_satp(uint64 x)
   {
     asm volatile("csrw satp, %0" : : "r" (x));
+    // csrw：RISC-V汇编语言的指令，用于将一个寄存器的值写入到指定的系统寄存器中
+    // 在这里，"csrw satp, %0" 的意思是将"%0"（即 "x"）的值写入到 SATP 寄存器中。
+    // "volatile"关键字表示该指令是一个内存屏障，即必须立即执行，并且不能被编译器优化或重排。
   }
   ```
-
+  
   ```cpp
   #define MAKE_SATP(pagetable) (SATP_SV39 | (((uint64)pagetable) >> 12))
+  
+  // SATP_SV39对应`8L << 60`
+  // 根据高位编码值公式是`(N/8 - 1)L`，因此该模式高位编码的位数为4
+  // 而高位编码的方式是固定的，不同的高位编码表示不同的虚拟地址模式。
   ```
-
-  首先
-
+  
+  > 综合来看`w_satp(MAKE_SATP(kernel_pagetable));`就是将内核页表写入satp寄存器，现在开始，内核页表全面接管啦！！！
+  
   ```cpp
   // flush the TLB.
   static inline void
@@ -136,5 +145,67 @@
     asm volatile("sfence.vma zero, zero");
   }
   ```
-
   
+  啊，那么TLB是什么呢？我们接着来看书吧！！
+  
+  [todo][]先跳过procinit，待会来看。
+  
+  在文章也有讲到 TLB（Translation Look-aside Buffer），那么TLB是用来存储最近访问的虚拟地址到物理地址的转换结果（用于加速内存访问）。
+  
+  xv6如果在更改页表的时候没有指定旧的TLB条目无效，那么稍后TLB可能会用旧的缓存映射，指向一个已经分配给其他进程的物理页。那么结果就是，**一个进程就有能力去在其他进程的内存中进行修改**，后果十分严重。
+  
+  那么，如何刷新呢？RISC-V给出了一条指令`sfence.vma`，用于刷新当前CPU的TLB
+  
+  <img src="images/1679294379619.png" style="zoom:80%;" />
+  
+  xv6在重新加载satp寄存器后在`kvminithart`中执行`sfence.vma`，在返回用户空间之前在切换到用户页表的 `trampoline` 代码中执行 `sfence.vma`(kernel/trampoline.S:79)。
+  
+  以上在代码中均能找到
+  
+  <img src="images/1679294458976.png" style="zoom:85%;" />
+  
+  <img src="images/1679294338724.png" style="zoom:80%;" />
+  
+  好，那么回到原文，`main`调用`procinit`为每个进程分配内核堆栈。为每个堆栈映射到由`KSTACK`生成的虚拟地址，从而为保护页（invalid）留出空间。
+  
+  <img src="images/1679296431415.png" style="zoom:80%;" />
+  
+  结构体`proc`如下：
+  
+  ```cpp
+  // Per-process state
+  struct proc {
+      
+    // 这里有一个锁
+    struct spinlock lock;
+  
+    // 当使用这些元素必须要获取锁
+    // p->lock must be held when using these:
+    enum procstate state;        // Process state
+    void *chan;                  // If non-zero, sleeping on chan
+    int killed;                  // If non-zero, have been killed
+    int xstate;                  // Exit status to be returned to parent's wait
+    int pid;                     // Process ID
+  
+    // what is wait_lock?
+    // wait_lock must be held when using this:
+    struct proc *parent;         // Parent process
+  
+    // 下面的元素对进程来说是私有的，所以不需要获取锁
+    // these are private to the process, so p->lock need not be held.
+    uint64 kstack;               // Virtual address of kernel stack
+    uint64 sz;                   // Size of process memory (bytes)
+    pagetable_t pagetable;       // User page table
+    // 这个kpagetable是自己加的...
+    pagetable_t kpagetable;	   // Kernel page table
+    struct trapframe *trapframe; // data page for trampoline.S
+    struct usyscall *usyscall;   // data page for USYSCALL
+    struct context context;      // swtch() here to run process
+    struct file *ofile[NOFILE];  // Open files
+    struct inode *cwd;           // Current directory
+    char name[16];               // Process name (debugging)
+  };
+  ```
+  
+  [todo][]了解结构体proc的各个元素
+

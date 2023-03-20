@@ -31,3 +31,7 @@
 - fetch：取来；拿来
 - descend：下来，下去，下降
 - as：当
+- look-aside：后备
+- at some point later：在以后的某个时刻，稍后
+- in the meantime：在这期间
+- restore：恢复
