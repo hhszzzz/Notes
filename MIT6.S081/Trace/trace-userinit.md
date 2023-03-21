@@ -79,9 +79,9 @@ uvminit(pagetable_t pagetable, uchar *src, uint sz)
 
 - 图3
 
-<img src="images/1678709335588.png" style="zoom:80%;" />
+<img src="images/1679396744443.png" style="zoom:80%;" />
 
-不难通过注释看出，这个函数是分配页表的，但是本着深究的精神，我们来详细解释这里吧！
+通过注释不难看出，这个函数是分配页表的，但是本着深究的精神，我们来详细看看
 
 ```cpp
 struct run {
@@ -95,6 +95,8 @@ struct {
 ```
 
 在xv6的物理内存分配器中，`struct run`结构体是用来维护一条可用的内存块链表。
+
+`kmem`结构体
 
 综上可以发现，原来`kalloc()`74-76行是**为了找到一个可用的内存块并返回！**
 

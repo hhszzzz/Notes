@@ -37,3 +37,8 @@
 - restore：恢复
 - mutual：互相的，相互的，彼此的
 - exclude：排除，不包括（exclusion：排斥）
+- parse：语法分析
+- perform：执行
+- arithmetic：（n.算术，演算）（a.算术的）
+- traverse：（v.横过，横越）（n.穿越，通过）
+- dual：（a.双重的，双的）（n.双数）

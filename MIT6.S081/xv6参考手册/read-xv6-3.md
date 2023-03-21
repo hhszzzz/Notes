@@ -2,6 +2,8 @@
 
 - A：如下图，首先我们有一个虚拟地址，然后根据虚拟地址的前27位的index（后面有讲EXT）索引到页表的页表项PTE，然后找到PPN，最后根据PPN和虚拟地址的偏移量Offset组合成物理地址。
 
+  - 图1
+
   <img src="../Trace/images/1678711780769.png" style="zoom:67%;" />
 
   有的人可能会问那虚拟地址最前面的25位是什么？在RISC-V中，虚拟地址的EXT部分时用于扩展虚拟地址的。
@@ -17,6 +19,8 @@
   第二问，已经在上文给出了答案，但是再补充一点！**在CPU需要查找虚拟地址对应的物理地址时，会用到MMU，在MMU中存储了一张虚拟地址与物理地址映射的表单，通过MMU进行转换后，在satp寄存器中定位到一级目录**。
 
   第三问，并不是！**虚拟地址的前27位的其中9位是用于索引某一级页表的页表项**，得到PPN，通过PPN定位到下一级页表，再用其中9位索引该页表的页表项。
+
+  - 图2
 
   <img src="https://img-blog.csdnimg.cn/6dbf6d3ce0424bff84502ae0f5c65796.png" alt="在这里插入图片描述" style="zoom:67%;" />
 
@@ -38,11 +42,15 @@
 
   [todo][]凡事都要讲个证据，直接映射具体代码在哪呢？还有`fork`真的是这样吗？
 
+  - 图3
+
   <img src="https://img-blog.csdnimg.cn/70d921a29cac46338058aed58576b36d.png" alt="在这里插入图片描述" style="zoom:67%;" />
 
 - 从图上我还发现了比较有意思的一点，内核代码和内核数据是直接映射到物理内存（RAM）中的，而且`PHYSTOP`到`MAXVA`之间存放着内核的数据段和内核的堆。具体来说，它包括内核数据结构、内存分配器、系统调用参数和返回值缓冲区、各种缓冲区以及其他内核需要数据等等。
 
   这里其实还要解释一下内核代码和内核数据分别是用来做什么的，[todo][]
+
+  - 图4
 
   ![](images/1678923652486.png)
 
@@ -259,7 +267,7 @@
   
   xv6使用内核末端和`PHYSTOP`（操作系统所支持的物理内存的上限）之间的物理内存用于运行时分配，一次分配一个page
   
-  <img src="images/1679312647837.png" style="zoom:80%;" />
+  <img src="images/1679312647837.png"  />
   
   通过维护一个物理页的链表来寻找哪些内存页面当前可用和哪些已经被分配，**噢噢！这里就是内存**。分配新内存时，os需要从链表中移除一个**可用页面**（这里我一开始理解为移除别的进程正在使用的，原来是一个可用的）来分配给该进程使用，这个过程被称为"Allocation"（分配）；相反，当一个进程释放一个页面时，os会将该页面添加回链表中以便下次可以被重新分配给其他进程使用，这个过程被称为"Freeing"（释放）
   
@@ -267,4 +275,92 @@
   
   现在苦逼的3.5，算了，明天再看吧！
   
+  在`kinit`函数中，初始化锁`kmem`，然后进入`freerange(end, (void*)PHYSTOP)`函数
   
+  <img src="images/1679399471206.png"  />
+  
+  那么这里的PHYSTOP代表了最高的物理地址，`end`又表示什么呢？于是我找到了这段。
+  
+  ![](images/1679399574722.png)
+  
+  注释说明了是继内核之后的第一个地址，即内核的终点
+  
+  于是我又找到了文件kernel.ld
+  
+  ```c
+  OUTPUT_ARCH( "riscv" )
+  ENTRY( _entry )
+  
+  SECTIONS
+  {
+    /*
+     * ensure that entry.S / _entry is at 0x80000000,
+     * where qemu's -kernel jumps.
+     */
+    . = 0x80000000;
+  
+    .text : {
+      *(.text .text.*)
+      . = ALIGN(0x1000);
+      _trampoline = .;
+      *(trampsec)
+      . = ALIGN(0x1000);
+      ASSERT(. - _trampoline == 0x1000, "error: trampoline larger than one page");
+      PROVIDE(etext = .);
+    }
+  
+    .rodata : {
+      . = ALIGN(16);
+      *(.srodata .srodata.*) /* do not need to distinguish this from .rodata */
+      . = ALIGN(16);
+      *(.rodata .rodata.*)
+    }
+  
+    .data : {
+      . = ALIGN(16);
+      *(.sdata .sdata.*) /* do not need to distinguish this from .data */
+      . = ALIGN(16);
+      *(.data .data.*)
+    }
+  
+    .bss : {
+      . = ALIGN(16);
+      *(.sbss .sbss.*) /* do not need to distinguish this from .bss */
+      . = ALIGN(16);
+      *(.bss .bss.*)
+    }
+  
+    PROVIDE(end = .);
+  }
+  
+  ```
+  
+  虽然我看不懂链接器脚本（Linker Script），但是GPT可以啊！
+  
+  在这个链接脚本中，`.text`部分定义了操作系统内核代码段（可能就是图4中的`kernel text`），`.rodata`部分定义了只读数据段，`.data`部分定义了读写数据段（`kernle data`），`.bss`部分定义了未初始化的数据段
+  
+  然后深入`freerange`函数
+  
+  ![](images/1679400638241.png)
+  
+  前面的都能理解，（根据偏移量）向上取整`pa_start`复制给p（这里向上取整是有讲究的，因为如果下取整到了内核的数据代码等，就有可能会出问题。而且还有一个与之相对的函数`PGROUNDDOWN`在我的`trace_userinit`文章中有讲到），然后从`pa_start`到`pa_end`进行`kfree`函数
+  
+  ![](images/1679401337901.png)
+  
+  free`v`指向的物理内存页（这里注释应该有问题，应该`v`$\rightarrow$`pa`），该物理内存页一般通过`kalloc`函数调用返回（如果初始化分配器异常，查看上面的`kinit`）
+  
+  那么经过向上取整之后的`pa`（freerange的p）应该不太可能会出现51行if前两个条件，那么如果有了，就报错呗~
+  
+  55行，注释解释了，在代码中填充一些随机数据，以便在程序中引用一个未初始化或已经释放的内存时，可以更容易地发现这些问题，从而避免程序崩溃或出现其他错误。小tips：这样的填充的数据通常被称为"垃圾值"（`junk value`）或"毒草"（`poison`）
+  
+  57-62行的意图很明显，就是和`kalloc()`函数相反的操作（参考我的文章`trace_userinit`）
+  
+  那现在的`kinit`就详解完了
+  
+  在书上还提到，分配器开始没有内存，正是对`kfree`的调用将可用内存交给了分配器来管理。
+  
+  **分配器代码中的类型转换：**
+  
+  分配器有时将地址视为整数以便对其执行算术运算(例如，遍历`freerange`中的所有page)，有时将地址用作读写内存的指针(例如，操作存储在每个页面中的`run`结构体)。这种对地址的双重使用是分配器代码充满C类型转换的主要原因。另一个原因是释放和分配内存固有地改变了内存的类型。 
+  
+- 终于结束了3.5！！
