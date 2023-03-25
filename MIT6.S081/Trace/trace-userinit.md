@@ -37,13 +37,13 @@ userinit(void)
 
 - 图1
 
-<img src="images/1678707798281.png" style="zoom:80%;" />
+<img src="https://picgo-picture-storage.oss-cn-guangzhou.aliyuncs.com/img/1678707798281.png"  />
 
 可以发现这个函数是为了给状态为`UNUSED`（表示该进程表项PTE当前未被使用）的进程使用的，遍历每一个进程，在xv6中，`NPROC`宏定义为64，如果找到状态为`UNUSED`的，就给该进程分配一个表单和初始化进程控制块等等。
 
 - 图2
 
-<img src="images/1678708440209.png" style="zoom: 80%;" />
+<img src="https://picgo-picture-storage.oss-cn-guangzhou.aliyuncs.com/img/1678708440209.png"  />
 
 #### [todo][]（查询trapframe）我找到了！
 
@@ -79,9 +79,9 @@ uvminit(pagetable_t pagetable, uchar *src, uint sz)
 
 - 图3
 
-<img src="images/1679396744443.png" style="zoom:80%;" />
+<img src="https://picgo-picture-storage.oss-cn-guangzhou.aliyuncs.com/img/1679396744443.png"  />
 
-通过注释不难看出，这个函数是分配页表的，但是本着深究的精神，我们来详细看看
+通过注释（这里68行注释应该是头插法）不难看出，这个函数是分配页表的，但是本着深究的精神，我们来详细看看
 
 ```cpp
 struct run {
@@ -94,11 +94,15 @@ struct {
 } kmem;
 ```
 
-在xv6的物理内存分配器中，`struct run`结构体是用来维护一条可用的内存块链表。
+在xv6的物理内存分配器中，`struct run`结构体是用来维护一条可用的内存块链表（注意这个`kmem.freslist`的大小是固定的。在xv6中，物理内存管理器不支持动态增加或减少物理内存）。
 
 `kmem`结构体
 
 综上可以发现，原来`kalloc()`74-76行是**为了找到一个可用的内存块并返回！**
+
+[todo-fi][]在这里我又有疑问了`(void*)`是什么意义，为什么这里的`r`就一定是PGSIZE呢？为什么84行又要转化为`(char*)`呢？
+
+- A：`(void*)`是一个未知类型的指针，可以指向任何类型的数据，可以显示或隐式地转换为其他类型的指针，以便程序中访问所分配的内存块！
 
 PS：可能这里会有人对`panic`有疑问，这个函数就是用来报错的，涉及到中断处理程序，目前先搁置一旁。
 
@@ -157,7 +161,7 @@ mappages(pagetable_t pagetable, uint64 va, uint64 size, uint64 pa, int perm)
 
 - 图4
 
-<img src="images/1678711780769.png" style="zoom: 67%;" />
+<img src="https://picgo-picture-storage.oss-cn-guangzhou.aliyuncs.com/img/1678711780769.png"  />
 
 如图4，就可以解释了。
 
@@ -207,11 +211,11 @@ walk(pagetable_t pagetable, uint64 va, int alloc)
 
 19行循环从一级页表开始，21行看不懂没关系，继续追代码
 
-<img src="images/1678967703386.png" style="zoom:80%;" />
+<img src="https://picgo-picture-storage.oss-cn-guangzhou.aliyuncs.com/img/1678967703386.png"  />
 
 可以发现`PX(level, va)`是为了得到某一级页表的某个PTE！于是我们返回
 
-<img src="images/1678967838469.png" style="zoom:80%;" />
+<img src="https://picgo-picture-storage.oss-cn-guangzhou.aliyuncs.com/img/1678967838469.png"  />
 
 `pagetable_t`其实就是某一级页表，结合起来`&pagetable[PX(level, va)]`就是返回该级页表的一个PTE
 
@@ -267,10 +271,10 @@ void *memmove(void *dest, const void *src, size_t n);
 
   `initcode`的作用：其实就是一段汇编语言
 
-  <img src="images/1679233103067.png" style="zoom: 80%;" />
+  <img src="https://picgo-picture-storage.oss-cn-guangzhou.aliyuncs.com/img/1679233103067.png"  />
   
   但是我在proc.c当中又发现了一个initcode数组，目前还不知道是做什么的
   
-  <img src="../xv6%E5%8F%82%E8%80%83%E6%89%8B%E5%86%8C/images/1679296431415.png" style="zoom:80%;" />
+  <img src="https://picgo-picture-storage.oss-cn-guangzhou.aliyuncs.com/img/1679296431415.png"  />
 
 # 现在终于又能分析userinit的代码了

@@ -11,7 +11,7 @@
 - in the common case：一般情况下
 - interpret：解释，说明
 - execute：执行，实施
-- supervisor：（指导者）；（主管）
+- supervisor：（n.指导者）；（v.主管）
 - generate：生成，产生，引起
 - subsequent：后来的，随后的
 - layout：布局，设计，安排
@@ -25,20 +25,31 @@
 - reside：居住于，定居于
 - sequence：序列
 - extract：提取，摘录
-- indices：索引，标志
-- mimics：模仿
+- indices：索引，标志（index的复数形式）
+- mimic：（v.模仿）；（a.模仿的）
 - at the time：在一定时间
 - fetch：取来；拿来
 - descend：下来，下去，下降
 - as：当
 - look-aside：后备
 - at some point later：在以后的某个时刻，稍后
-- in the meantime：在这期间
+- in the meantime：在这期间，与此同时
 - restore：恢复
-- mutual：互相的，相互的，彼此的
+- mutual：互相的，互助的，彼此的
 - exclude：排除，不包括（exclusion：排斥）
 - parse：语法分析
 - perform：执行
-- arithmetic：（n.算术，演算）（a.算术的）
-- traverse：（v.横过，横越）（n.穿越，通过）
-- dual：（a.双重的，双的）（n.双数）
+- arithmetic：（n.算术，演算）；（a.算术的）
+- traverse：（v.横过，横越）；（n.穿越，通过）
+- dual：（a.双重的，双的）；（n.双数）
+- separate：（v.分离，分开）；（a.单独的，分开的，独立的）
+- leave：离开，丢弃，留下
+- optionally：随意地
+- recursively：递归地
+- unwary：不警觉的，不严谨的
+- malicious：恶意的，恶毒的
+- subversion：（对政府、政治制度的）颠覆，破坏
+- exploit：开发，剥削，压榨，利用（...为自己牟利）
+- privileges：（n.特权）（v.给予特权）
+- circumvent ：vt.绕过/行，规避
+- expiration：到期，截止

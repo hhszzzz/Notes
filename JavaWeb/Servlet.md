@@ -1238,7 +1238,23 @@ public class Response2 extends HttpServlet {
 >
 > `filename`=文件名：表示指定下载文件的文件名
 >
-> 如果文件名是中午，则需要`new String(file.getName().getBytes("GBK"), "ISO-8859-1")`对中文进行指定的解码方式解码，再按照Tomcat指定的方式解码。
+> 如果文件名是中文，则需要把`filename`改成`new String(file.getName().getBytes("GBK"), "ISO-8859-1")`对中文进行指定的解码方式解码，再按照Tomcat指定的方式解码。
+
+```java
+protected void doPost(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
+        File file = new File("D:/3e1afa8608d7baeaee3e0d12633123d7_1.jpg");
+        FileInputStream fis = new FileInputStream(file);
+        byte[] buff = new byte[fis.available()];
+        fis.read(buff);
+
+        response.addHeader("Content-Disposition", "attachment;filename=" + file.getName());
+
+        ServletOutputStream os = response.getOutputStream();
+        os.write(buff);
+        os.close();
+        fis.close();
+    }
+```
 
 ### （7）修改响应头的参数
 
@@ -1248,4 +1264,3 @@ public class Response2 extends HttpServlet {
 > setHeader("server", "JBoss")	设置服务器类型
 > ```
 >
-> 

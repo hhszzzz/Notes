@@ -76,7 +76,7 @@
 
 然后，你可能会见到如下的界面：
 
-![](images/image-20230313093659689.png)
+![](https://picgo-picture-storage.oss-cn-guangzhou.aliyuncs.com/img/image-20230313093659689.png)
 
 这样，你就进入gdb的命令行环境里了。
 
@@ -152,7 +152,7 @@ Reading symbols from example...done.
 
 例如：`layout split`
 
-![](images/1678692779946.png)
+![](https://picgo-picture-storage.oss-cn-guangzhou.aliyuncs.com/img/1678692779946.png)
 
 ## 设置断点
 
