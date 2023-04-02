@@ -143,7 +143,7 @@ public class HelloServlet implements Servlet {
 > 第三步，每次访问都会调用
 > 第四步，在 web 工程停止的时候调用
 
-![](images/1678414920071.png)
+![](https://picgo-picture-storage.oss-cn-guangzhou.aliyuncs.com/img/1678414920071.png)
 
 ```java
 package com.atguigu.servlet;
@@ -316,9 +316,9 @@ public class HelloServlet2 extends HttpServlet {
 
 ### (9)	Tomcat内部代码执行顺序
 
-![](images/1678359764459.png)
+![](https://picgo-picture-storage.oss-cn-guangzhou.aliyuncs.com/img/1678359764459.png)
 
-![](images/1678359969385.png)
+![](https://picgo-picture-storage.oss-cn-guangzhou.aliyuncs.com/img/1678359969385.png)
 
 ## 002-[ServletConfig](https://so.csdn.net/so/search?q=ServletConfig&spm=1001.2101.3001.7020) 类
 
@@ -478,7 +478,7 @@ public class HelloServlet2 extends HttpServlet {
 >
 > 4、用于服务器封装当前Web的应用环境，即**整个web.xml文档**
 >
-> <img src="images/1679208543150.png" style="zoom:67%;" />
+> <img src="https://picgo-picture-storage.oss-cn-guangzhou.aliyuncs.com/img/1679208543150.png" style="zoom:67%;" />
 >
 > 
 >
@@ -634,7 +634,7 @@ public class ServletContext2 extends HttpServlet {
 
 ####  1）URI、URL、URN
 
-<img src="images/1678323090485.png"  />
+<img src="https://picgo-picture-storage.oss-cn-guangzhou.aliyuncs.com/img/1678323090485.png"  />
 
 ### （2）请求的 HTTP 协议格式
 
@@ -699,7 +699,7 @@ public class ServletContext2 extends HttpServlet {
 
 ### （3）GET 和 POST 的区别
 
-![](images/1678324675869.png)
+![](https://picgo-picture-storage.oss-cn-guangzhou.aliyuncs.com/img/1678324675869.png)
 
 > 解释最后一点：当提交表单后点击回退，`GET`方式不会再次提交请求，而`POST`会
 
@@ -710,7 +710,7 @@ public class ServletContext2 extends HttpServlet {
 > 		(2) 响应状态码
 > 		(3) 响应状态描述符（对状态码的描述）
 
-![](images/1678326068884.png)
+![](https://picgo-picture-storage.oss-cn-guangzhou.aliyuncs.com/img/1678326068884.png)
 
 > 2、响应头
 > 		(1) key : value 不同的响应头，有其不同含义
@@ -729,6 +729,8 @@ public class ServletContext2 extends HttpServlet {
 
 ### （5）MIME 类型说明
 
+> 用于设定实体内容的`MIME`类型响应头是`Content-Type`
+>
 > `MIME` 是 HTTP 协议中数据类型。
 >
 > `MIME` 的英文全称是"Multipurpose Internet Mail Extensions" 多功能 Internet 邮件扩充服务。
@@ -919,7 +921,7 @@ public class ParameterServlet extends HttpServlet {
 
 首先放一段与chatGPT的聊天来解释
 
-<img src="images/1679153210101.jpg" style="zoom: 80%;" />
+<img src="https://picgo-picture-storage.oss-cn-guangzhou.aliyuncs.com/img/1679153210101.jpg" style="zoom: 80%;" />
 
 ### （5）请求的转发
 
@@ -948,7 +950,7 @@ public class ParameterServlet extends HttpServlet {
 
 > - WEB-INF目录：
 
-![](images/1678343952163.png)
+![](https://picgo-picture-storage.oss-cn-guangzhou.aliyuncs.com/img/1678343952163.png)
 
 ```java
 package com.atguigu.HttpServletRequestClass;
@@ -1062,7 +1064,7 @@ href 属性就是参数的地址值
 
 > 那么如果要访问资源，一般有两种方式
 >
-> <img src="images/1679153456531.png" style="zoom:67%;" />
+> <img src="https://picgo-picture-storage.oss-cn-guangzhou.aliyuncs.com/img/1679153456531.png" style="zoom:67%;" />
 >
 > - 绝对路径
 >
@@ -1263,4 +1265,3 @@ protected void doPost(HttpServletRequest request, HttpServletResponse response) 
 > sendError(404/500...)			返回错误信息
 > setHeader("server", "JBoss")	设置服务器类型
 > ```
->

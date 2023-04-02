@@ -96,7 +96,7 @@
 |            | $\lim^{x \to \infty}_{y \to 0}{\frac{x}{y}}$              | \\lim^{x \\to \\infty}\_{y \\to 0}{\\frac{x}{y}}             |
 | 约等于     | ≈                                                         | \\approx                                                     |
 | 恒等于     | ≡                                                         | \\equiv                                                      |
-| 差集       | ∖                                                         | \\setminus                                                   |
+| 差集       | $\setminus$                                               | \\setminus                                                   |
 | 同或运算   | ⨀                                                         | \\bigodot                                                    |
 | 同与运算   | ⨂                                                         | \\bigotimes                                                  |
 | 常用数集   | $\mathbb{R}$                                              | \\mathbb{R} {N} {Q}                                          |

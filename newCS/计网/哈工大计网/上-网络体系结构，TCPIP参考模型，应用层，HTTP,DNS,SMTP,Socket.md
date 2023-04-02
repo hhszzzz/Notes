@@ -1,4 +1,4 @@
-# [计算机网络](https://so.csdn.net/so/search?q=%E8%AE%A1%E7%AE%97%E6%9C%BA%E7%BD%91%E7%BB%9C&spm=1001.2101.3001.7020)之网尽其用
+# 计算机网络之网尽其用
 
 ## 1 计算机网络概述
 
@@ -6,14 +6,14 @@
 
 - **计算机网络是通信技术与计算机技术紧密结合的产物**
 
-![](https://img-blog.csdnimg.cn/a646dd729a94465597140a07de9fa5c6.png)
+![](https://picgo-picture-storage.oss-cn-guangzhou.aliyuncs.com/img/a646dd729a94465597140a07de9fa5c6.png)
 
 - **计算机网络就是一种通信网络**
 
-![在这里插入图片描述](https://img-blog.csdnimg.cn/de00aa4eeacd4a309f08cb3d0561ed39.png)
+![](https://picgo-picture-storage.oss-cn-guangzhou.aliyuncs.com/img/de00aa4eeacd4a309f08cb3d0561ed39.png)
 
 - **通过交换网络互连主机**  
-    ![在这里插入图片描述](https://img-blog.csdnimg.cn/72ef4e1a855c49d9b522ae070998118b.png)
+    ![在这里插入图片描述](https://picgo-picture-storage.oss-cn-guangzhou.aliyuncs.com/img/72ef4e1a855c49d9b522ae070998118b.png)
     
 - **什么是Internet？----组成细节角度**
   
