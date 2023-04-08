@@ -8,7 +8,6 @@
 - chunks：大块，厚片
 - format：格式，设计
 - omit：省略，忽略
-- in the common case：一般情况下
 - interpret：解释，说明
 - execute：执行，实施
 - supervisor：（n.指导者）；（v.主管）
@@ -27,13 +26,10 @@
 - extract：提取，摘录
 - indices：索引，标志（index的复数形式）
 - mimic：（v.模仿）；（a.模仿的）
-- at the time：在一定时间
 - fetch：取来；拿来
 - descend：下来，下去，下降
 - as：当
 - look-aside：后备
-- at some point later：在以后的某个时刻，稍后
-- in the meantime：在这期间，与此同时
 - restore：恢复
 - mutual：互相的，互助的，彼此的
 - exclude：排除，不包括（exclusion：排斥）
@@ -53,3 +49,83 @@
 - privileges：（n.特权）（v.给予特权）
 - circumvent ：vt.绕过/行，规避
 - expiration：到期，截止
+- malfunction：（v./n. 失灵；故障）
+
+---
+
+23.04.03
+
+- intentionally：有意地，故意地
+- interact：互动，交流，合作
+- overview：n.概述
+- architecture：结构，架构
+- embed：嵌入，插入
+- downside：负面
+- cooperative：合作的，协作的
+- infinite：无限的
+- terminate：终止
+- illustrate：（用示例、图例）说明，解释
+- invoke：调用
+- transition：过渡，转变
+- validate：验证，确认
+- fatal：致命的，灾难性的
+- bulk：主体，大部分
+- deliver：v.传送，递送
+- performance：（n.性能）（a.高性能的）
+- integrate：（a.集成的）（v.合并，融入）
+- practical：实际的
+- incentive：（n.激励，鼓励；刺激）（a.刺激的）
+- feature：（n.特点，特色，功能）（v.以...为特色）
+- perspective：n.态度，观点（attitude）
+- notion：概念，观念，理解
+- modularity：模块化（module：模块）
+- unit：单元
+- wreck：破环，损坏
+- spy：监视
+- subvert：暗中破坏，策反
+- illusion：n.幻觉，错觉
+- notation：符号
+- resume：重新开始，（中断后）继续
+- suspend：暂停，中止
+- alternate：v.交替，轮流
+- bundle：（v.绑定）（n.捆，包）
+- concrete：（adj.具体的）（n.混凝土）
+- prominent：重要的，著名的，杰出的
+
+---
+
+23.04.04
+
+- narrow：狭窄的
+- tempt：引诱，诱惑
+- sophisticated：复杂的，精密的；先进的
+- combine：联合，结合
+- generality：概论/述，普遍性
+- mimic：模仿
+- procedure：过程，步骤
+- essence：本质
+- convention：习俗，惯例
+
+---
+
+23.04.05
+
+- property：财产，所有物（pl.properties）
+- fragment：碎片，片段
+- implicitly：含蓄地，暗中地
+- represent：v.代表，表示
+- duplicate：v.复制，复印
+- simplicity：n.简单（性），质朴
+- truncate：截断，截短
+- hypothetical：假设的，假定的
+- derive：v.获得，得到，起源
+- interior：（n.内部，里面）（a.内部的）
+- prompt：（v.促使；鼓励）（a.立即的）
+- arbitrarily：adv.任意地，随意地（arbitrary：a.）
+- interpret：解释，说明
+- evaluate：估计，评价
+- divert：使转向
+- distinct：不同的，明显的
+- retrieve：取回，找回
+- idiomatic：惯用的
+- callable：可赎回的，可缴纳的

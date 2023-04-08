@@ -456,7 +456,7 @@ stack frame.  This is useful for breaking on return to a stack frame.
 | `enable`   | `en`   | 启用某些东西                     |
 | `help`     | `h`    | 获取帮助                         |
 
-# 图形界面？
+# 图形界面
 
 gdb 作为一个命令行调试器，对于某些人来说可能望而生畏。
 
@@ -467,3 +467,29 @@ gdb 作为一个命令行调试器，对于某些人来说可能望而生畏。
 如果你是个 Vim 爱好者，`vim-vebugger `也不错。
 
 对上面不满意？可以试试 gdb 自带的伪图形界面，只要启动gdb时加上 `-tui` 选项即可。
+
+# 如何开始调试？
+
+首先要确保已经安装了gdb工具
+
+随后在`xv6-labs-2021/`目录下输入`make qemu-gdb`命令，就会看到如下界面
+
+![1680881053479](https://picgo-picture-storage.oss-cn-guangzhou.aliyuncs.com/img/1680881053479.png)
+
+接下来重要的来了！我们要打开另一个终端窗口，修改自己`home`目录下的`.gdbinit`文件，允许`gdb`在`xv6-labs-2021`这个目录启动的时候，加载该文件下的`.gdbinit`文件。
+
+只需要在`home`目录下输入，注意这里的`YOUR_PATH`是你的`xv6-labs-2021`具体在哪个地方，拿我举例，我的lab放在了`/home/hhs`下。
+
+```bash
+echo "add-auto-load-safe-path YOUR_PATH/xv6-labs-2021/.gdbinit " >> ~/.gdbinit
+```
+
+就像这样
+
+![image-20230407233133459](https://picgo-picture-storage.oss-cn-guangzhou.aliyuncs.com/img/image-20230407233133459.png)
+
+随后输入`gdb-multiarch`命令启动gdb调试，出现如下界面即代表启动成功（gdb）
+
+![1680881584564](https://picgo-picture-storage.oss-cn-guangzhou.aliyuncs.com/img/1680881584564.png)
+
+这样我们就可以进行调试啦~
