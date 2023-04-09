@@ -98,9 +98,12 @@
 
 **调用系统调用**
 
-> 第2章以**initcode.S**调用`exec`系统调用(user/initcode.S:11) 结束。让我们看看用户调用如何在内核中实现`exec`系统调用。  
-> ①用户代码将`exec`的参数放在寄存器`a0`和`a1`中，并将系统调用号放在`a7`中。系统调用号与`syscalls`数组中的条目相匹配(`syscall`数组是一个函数指针表 (kernel/syscall.c:108))。`ecall`指令trap进内核并执行`uservec`、`usertrap`，然后是 `syscall`，正如我们在上面看到的。  
-> ②`syscall`(kernel/syscall.c:133)从trampoline帧中保存的`a7`中检索系统调用号，并使用它来索引`syscalls`。对于第一个系统调用，`a7`包含`SYS_exec`(ker nel/syscall.h:8)，导致调用系统调用接口函数`sys_exec`。  
+> 第2章以`initcode.S`调用`exec`系统调用(user/initcode.S:11) 结束。让我们看看用户调用如何在内核中实现`exec`系统调用。 
+>
+> ①用户代码将`exec`的参数放在寄存器`a0`和`a1`中，并将系统调用号放在`a7`中。系统调用号与`syscalls`数组中的条目相匹配(`syscalls`数组是一个函数指针表 (kernel/syscall.c:108))。`ecall`指令trap进内核并执行`uservec`、`usertrap`，然后是 `syscall`，正如我们在上面看到的。 
+>
+> ②`syscall`(kernel/syscall.c:133)从trampoline帧中保存的`a7`中检索系统调用号，并使用它来索引`syscalls`。对于第一个系统调用，`a7`包含`SYS_exec`(kernel/syscall.h:8)，导致调用系统调用接口函数`sys_exec`。 
+>
 > ③当系统调用接口函数返回时，`syscall`将其返回值记录在`p->trapframe->a0`中。这将导致原始用户空间对`exec()`的调用返回该值，因为RISC-V上的C调用约定将返回值放在`a0`中。系统调用通常返回负数表示错误，返回零或正数表示成功。如果系统调用号无效，则`syscall`打印错误并返回-1
 
   
@@ -109,10 +112,19 @@
 
 **系统调用参数**
 
-> ①内核中的系统调用接口需要找到用户代码传递的参数。因为用户代码调用系统调用封装函数，所以参数被放置在RISC-V C调用所约定的位置：寄存器。内核trap代码将用户寄存器保存到当前进程的trapframe中，内核代码可以在其中找到它们。函数`argint`、`argaddr`和`argfd`从trapframe中检索第`n`个系统调用参数作为整数、指针或文件描述符。它们都调用`argraw`来检索相应的的已保存的用户寄存器(kernel/syscall.c:35)。  
-> ②一些系统调用将指针作为参数传递，内核必须使用这些指针来读取或写入用户内存。例如，`exec`系统调用向内核传递一个指针数组，该数组指向用户空间中的字符串参数。这些指标提出了两个挑战。首先，用户程序可能有缺陷或恶意，并且可能向内核传递无效指针或旨在欺骗内核访问内核内存而不是用户内存的指针。其次，xv6内核页表映射与用户页表映射不同，因此内核不能使用普通指令从用户提供的地址加载或存储。  
-> ③内核实现了安全地将数据传入和传出用户提供的地址的功能。`fetchstr`就是一个例子(kernel/syscall.c:25)。诸如`exec`之类的文件系统调用使用`fetchstr`从用户空间检索字符串文件名参数。`fetchstr`调用`copyinstr`来做这件事工作。  
-> ④`copyinstr`(kernel/vm.c:406)从用户页表中的虚拟地址`srcva`复制最多`max`字节到`dst`。它使用`walkaddr`(调用`walk`)在软件中遍历页表以确定`srcva`的物理地址 `pa0`。由于内核将所有物理RAM地址映射到同一个内核虚拟地址，因此`copyinstr`可以直接将字符串字节从`pa0`复制到`dst`。`walkaddr`(kernel/vm.c:95)检查用户提供的虚拟地址是否为进程用户地址空间的一部分，因此程序无法欺骗内核读取其他内存。类似的函数`copyout`将数据从内核复制到用户提供的地址。
+> ①内核中的系统调用接口需要找到用户代码传递的参数。因为用户代码调用系统调用封装函数，所以参数被放置在RISC-V C调用所约定的位置：寄存器。内核trap代码将用户寄存器保存到当前进程的`trapframe`中，内核代码可以在其中找到它们。函数`argint`、`argaddr`和`argfd`从`trapframe`中检索第`n`个系统调用参数作为整数、指针或文件描述符。它们都调用`argraw`来检索相应的的已保存的用户寄存器(kernel/syscall.c:35)。 
+>
+> ②一些系统调用将指针作为参数传递，内核必须使用这些指针来读取或写入用户内存。例如，`exec`系统调用向内核传递一个指针数组，该数组指向用户空间中的字符串参数。这些指标提出了两个挑战。首先，用户程序可能有缺陷或恶意，并且可能向内核传递无效指针或旨在欺骗内核访问内核内存而不是用户内存的指针。其次，xv6内核页表映射与用户页表映射不同，因此内核不能使用普通指令从用户提供的地址加载或存储。 
+>
+> ③内核实现了安全地将数据传入和传出用户提供的地址的功能。`fetchstr`就是一个例子(kernel/syscall.c:25)。诸如`exec`之类的文件系统调用使用`fetchstr`从用户空间检索字符串文件名参数。`fetchstr`调用`copyinstr`来做这件事工作。 
+>
+> ![image-20230409091947010](https://picgo-picture-storage.oss-cn-guangzhou.aliyuncs.com/img/image-20230409091947010.png)
+>
+> ④`copyinstr`(kernel/vm.c:406)从用户页表`pagetable`中的虚拟地址`srcva`复制最多`max`字节到`dst`。由于`pagetable`不是现在的页表（现在是虚拟地址映射的，而非物理地址），所以它使用`walkaddr`(调用`walk`)（通过虚拟地址查找物理地址）在软件中遍历页表以确定`srcva`的物理地址 `pa0`。由于内核将所有物理RAM地址映射到同一个内核虚拟地址（xv6采用的是直接映射，物理地址和虚拟地址相同），因此`copyinstr`可以直接将字符串字节从`pa0`复制到`dst`。`walkaddr`(kernel/vm.c:95)检查用户提供的虚拟地址是否为进程用户地址空间的一部分，因此程序无法欺骗内核读取其他内存。(行：113~118)
+>
+> ![image-20230409091840485](https://picgo-picture-storage.oss-cn-guangzhou.aliyuncs.com/img/image-20230409091840485.png)
+>
+> 一个类似的函数，函数`copyout`将数据从内核复制到用户提供的地址。
 
   
 

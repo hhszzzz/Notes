@@ -90,6 +90,12 @@ xv6使用页表（由硬件实现）为每个进程提供自己的地址空间�
 
    ![image-20230408202414533](https://picgo-picture-storage.oss-cn-guangzhou.aliyuncs.com/img/image-20230408202414533.png)
 
+   随后`syscall`(kernel/syscall.c:133)函数会根据`trapframe->a7`来检索系统调用号，索引`syscalls`，来执行该内核调用
+
+   ![image-20230408211656073](https://picgo-picture-storage.oss-cn-guangzhou.aliyuncs.com/img/image-20230408211656073.png)
+
+   当系统调用接口函数返回时，`syscall`将其返回值记录在`p->trapframe->a0`中(kernel/syscall.c:140)。这将导致原始用户空间对`exec()`的调用返回该值，因为RISC-V上的C调用约定将返回值放在`a0`中。系统调用通常返回负数表示错误，返回零或正数表示成功。如果系统调用号无效，则`syscall`打印错误并返回-1
+
 8. 接下来`exec`用一个新程序(在本例中为`/init`)替换了当前进程的内存和寄存器。如果你仔细观察就会发现上上图的9行往`a0`中写入了`init`，然后你会发现`sys_exec`内核调用为什么没有参数捏？那么很有意思的点就是发现该内核调用的422行`argstr(0, path, MAXPATH)`，以及`argaddr(1, &uargv)`这两个函数
 
    ![image-20230408204835329](https://picgo-picture-storage.oss-cn-guangzhou.aliyuncs.com/img/image-20230408204835329.png)
