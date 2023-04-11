@@ -4,7 +4,7 @@
 
 Q：如何根据虚拟地址来查询物理地址？
 
-A：如下图，首先我们有一个虚拟地址，然后根据虚拟地址的前27位的index（后面有讲EXT）索引到页表的页表项<a href="#pte">PTE</a>，然后找到<a href="#ppn">PPN</a>，最后根据<a href="#ppn">PPN</a>和虚拟地址的偏移量Offset组合成物理地址。
+A：如下图，首先我们有一个虚拟地址，然后根据虚拟地址的前27位的index（后面有讲EXT）索引到页表的页表项<a href="#pte">PTE</a>（PPN+Flags），然后找到<a href="#ppn">PPN</a>，最后根据<a href="#ppn">PPN</a>和虚拟地址的偏移量Offset组合成物理地址。
 
 - 图1
 
@@ -16,7 +16,7 @@ A：如下图，首先我们有一个虚拟地址，然后根据虚拟地址的�
 
 Q：那么这里我就又有一个问题了，页表是存在哪里的呢？虚拟地址怎么访问页表的呢？虚拟地址的前27位是页表的物理地址吗？
 
-A：好，那么Figure3.2图也给出了解释（如下图），可以观察到页表已经分为了三级，一级页表是存储在<a href="#satp-register"><a href="#satp-register">satp寄存器</a></a>中的，此时通过satp找到一级页表，然后通过高九位（L2）查找到<a href="#ppn">PPN</a>，根据<a href="#ppn">PPN</a>定位到二级页表，同上，最后找到三级页表的<a href="#ppn">PPN</a>，再根据虚拟地址的偏移量Offset（低12位）组合成最终的物理地址。
+A：好，那么Figure3.2图也给出了解释（如下图），可以观察到页表已经分为了三级，一级页表是存储在<a href="#satp-register"><a href="#satp-register">satp寄存器</a></a>中的，此时通过satp找到一级页表，然后通过高九位（L2）查找到PTE，根据<a href="#ppn">PPN</a>的地址定位到二级页表，同上，最后找到三级页表的PTE，取出PPN，再根据虚拟地址的偏移量Offset（低12位）组合成最终的物理地址。
 
 那么现在就可以解释上面的问题了。
 
@@ -24,7 +24,7 @@ A：好，那么Figure3.2图也给出了解释（如下图），可以观察到�
 
 第二问，已经在上文给出了答案，但是再补充一点！**在CPU需要查找虚拟地址对应的物理地址时，会用到<a href="#mmu">MMU</a>，在<a href="#mmu">MMU</a>中存储了一张虚拟地址与物理地址映射的表单，通过<a href="#mmu">MMU</a>进行转换后，在<a href="#satp-register">satp寄存器</a>中定位到一级目录，继而**。
 
-第三问，并不是！**虚拟地址的前27位的其中9位是用于索引某一级页表的页表项**，得到<a href="#ppn">PPN</a>，通过<a href="#ppn">PPN</a>定位到下一级页表，再用其中9位索引该页表的页表项，从而找到下一级的页表。
+第三问，并不是！**虚拟地址的前27位的其中9位是用于索引某一级页表的页表项**，得到<a href="#ppn">PPN</a>，通过<a href="#ppn">PPN</a>定位到下一级页表，再用其中9位索引该页表的页表项，从而找到下一级的页表。依我所见，`PTE2PA(最后一级的PTE)`才是物理地址
 
 - 图2
 
@@ -48,19 +48,47 @@ A：好，那么Figure3.2图也给出了解释（如下图），可以观察到�
 
 在xv6中，内核采用**直接映射**的方式来获取RAM和<a href="#memory-mapped-control-registers">内存映射设备寄存器</a>，也就是说，内核空间中虚拟地址和物理地址是相同的。
 
-如下图，内核在虚拟地址空间和物理内存都位于`KERNBASE = 0x80000000`上，有什么好处呢？答案是直接简化了读取或写入内存的内核代码！
+> 解释一下上图出现的各种不知名的东西
+>
+> 1. `CLINT`：CLINT is used to implement the timer and interprocessor interrupts (IPIs).
+>
+> 2. `PLIC`：PLIC is used to implement device interrupts.
+>
+>    很显然`CLINT`是实现时钟中断的，而`PLIC`是实现设备中断的
+>
+> 3. `UART0`：uart0 is used to print debug information. 
+>
+>    qemu puts UART registers here in physical memory.
+>
+> 4. `VIRTIO0`：virtio mmio (mmio is memory-mapped I/O.) interface. 
+>
+>    virtio mmio is a standard interface for device drivers(设备驱动程序) to talk to virtual devices.
+>
+>    `VIRTIO0`提供磁盘I/O功能的虚拟设备，模拟一个磁盘控制器，通过virtio协议与宿主机进行通信，实现对虚拟磁盘的读写操作，`VIRTIO0`设备驱动程序在(kernel/virtio_disk.c)实现
+>
+>    此外，`VIRTIO0`设备并不是 xv6 操作系统中唯一的虚拟设备，还包括了 `VIRTCON`（用于提供虚拟终端）、`VIRTIO-RNG`（用于提供随机数生成器）等。这些虚拟设备都是为了方便在虚拟化环境中进行操作系统和应用程序的开发和测试而设计的。
+
+如下图，内核在虚拟地址空间和物理内存都位于`KERNBASE = 0x80000000`上，直接简化了读取或写入内存的内核代码。
 
 - 图3
 
 <img src="https://img-blog.csdnimg.cn/70d921a29cac46338058aed58576b36d.png" alt="在这里插入图片描述"  />
 
-从图上我还发现了比较有意思的一点，内核代码和内核数据也是直接映射到物理地址中的，而且在虚拟地址上，`PHYSTOP`到`MAXVA`之间存放着内核的数据段和内核的堆。具体来说，它包括内核数据结构、内存分配器、系统调用参数和返回值缓冲区、各种缓冲区以及其他内核需要数据等等。
+从图上可以观察到，`kernel data`和`kernel text`也是直接映射到物理地址中的，而且在虚拟地址上，`PHYSTOP`到`MAXVA`之间存放着内核的数据段和内核的堆。具体来说，这段空间中包括了内核数据结构、内存分配器、系统调用参数和返回值缓冲区、各种缓冲区以及其他内核需要数据等等。
 
-QEMU模拟一台包含RAM（物理内存）的计算机，从图上可看出，RAM从物理地址0x80000000开始并持续到0x86400000（PHYSTOP），同时，QEMU还模拟了I/O设备，例如磁盘接口。QEMU将设备接口作为<a href="#memory-mapped-control-registers">内存映射设备寄存器</a>暴露给软件，这些寄存器位于物理地址中0x80000000以下。内核可以通过读/写这些特殊的物理地址与设备进行交互，此类读写与设备的硬件通信而不是与RAM进行通信（第4章有讲到）
+> 总结
+>
+> 通过上述物理地址`0~KERNBASE`，是各种设备，驱动，`KERNBASE~PHYSTOP`是物理内存。
+>
+> 可以得出，实际上，设备上存储的都是**硬件地址**，但是这里出现了硬件地址和物理内存地址两种，为什么呢？因为物理内存其实是一个抽象的概念，是全体RAM存储单元的集合
+>
+> 所以，设备存储的都是硬件的地址，本质上并没有物理内存地址的概念。
+
+QEMU模拟一台包含RAM（物理内存）的计算机，从图上可看出，RAM从物理地址0x80000000开始并持续到0x86400000（PHYSTOP），同时，QEMU还模拟了I/O设备，例如磁盘接口。QEMU将设备接口作为<a href="#memory-mapped-control-registers">内存映射设备寄存器</a>暴露给软件，这些寄存器位于物理地址中0x80000000以下。内核可以通过读/写这些特殊的物理地址与设备进行交互，此类读写是与设备的硬件通信而不是与RAM进行通信（第4章有讲到）
 
 又例如，当`fork`（kernel/proc.c）为子进程分配用户内存时，分配器返回该内存的物理地址，于是`fork`将父进程的用户内存复制到子进程时，直接将该地址作为虚拟地址。
 
-凡事都要讲个证据，直接映射具体代码在哪呢？还有`fork`真的是这样吗？<a href="#fork-answer">直达答案</a>
+凡事都要讲个证据，直接映射具体代码在哪呢？还有`fork`真的是这样吗？<a href="#fork-answer">传送</a>
 
 ### fork函数
 
@@ -103,7 +131,7 @@ fork(void)
     if(p->ofile[i])
       np->ofile[i] = filedup(p->ofile[i]);
   np->cwd = idup(p->cwd);
-  // name在代码是用来debug的（下面的proc结构体又讲）
+  // name在代码是用来debug的（下面的proc结构体有讲）
   safestrcpy(np->name, p->name, sizeof(p->name));
 
   pid = np->pid;
@@ -153,7 +181,7 @@ found:
   p->state = USED;
 
   // Allocate a trapframe page.
-  if((p->trapframe = (struct trapframe *)kalloc()) == 0){ // 分配失败就进入
+  if((p->trapframe = (struct trapframe *)kalloc()) == 0){
     freeproc(p);
     release(&p->lock);
     return 0;
@@ -161,6 +189,7 @@ found:
 
   // An empty user page table.
   p->pagetable = proc_pagetable(p); // 分配一个页表
+  // 用户有用户的分配(proc_pagetable)，内核有内核的分配(kvmmake)
   if(p->pagetable == 0){
     freeproc(p);
     release(&p->lock);
@@ -177,13 +206,15 @@ found:
 }
 ```
 
+[todo][]forkret
+
 ##### freeproc函数
 
 下面贴出代码
 
 ![](https://picgo-picture-storage.oss-cn-guangzhou.aliyuncs.com/img/1679622057217.png)
 
-> 不难看出，该函数的作用是初始化一个进程，并将该进程设置为`UNUSED`状态。
+> 不难看出，该函数的作用是 "是恢复出厂设置"，将该进程设置为`UNUSED`状态。
 
 ##### context结构体
 
@@ -197,7 +228,7 @@ found:
 
 #### uvmcopy函数
 
-上文提到的问题的<span name="fork-answer">答案</span>应该就在这里了！
+上文提到的问题的<span name="fork-answer">答案</span>应该就在这里了！在代码24行已经标识出来了
 
 ```c
 // Given a parent process's page table, copy
@@ -625,6 +656,8 @@ A：一个进程确实是对应一个页表，但是页表不是用来存数据�
 虽然我看不懂链接器脚本（Linker Script），但是GPT可以啊！
 
 在这个链接脚本中，`.text`部分定义了操作系统内核代码段（可能就是图4中的`kernel text`），`.rodata`部分定义了只读数据段，`.data`部分定义了读写数据段（`kernle data`），`.bss`部分定义了未初始化的数据段
+
+> 综上，`kinit`是初始化从内核末尾到最高物理地址的空间
 
   ### `freerange`函数
 
@@ -1070,10 +1103,11 @@ uvmdealloc(pagetable_t pagetable, uint64 oldsz, uint64 newsz)
 ------
 
 <div name="leaf-PTE">
-    &emsp;&emsp;可以通过<a href="#pte">PTE</a>中的一些其他标志位来推断该<a href="#pte">PTE</a>是否为叶子页表项。例如，<a href="#pte">PTE</a>中的"Present"标志位指示该页表项指向的物理页是否被映射到了虚拟地址空间中。如果这个标志位被设置为 1，那么该<a href="#pte">PTE</a>指向一个有效的物理页，这个<a href="#pte">PTE</a>就不是叶子页表项。相反，如果这个标志位被设置为 0，那么该<a href="#pte">PTE</a>指向的物理页没有映射到虚拟地址空间中，这个<a href="#pte">PTE</a>就是叶子页表项。
+    &emsp;&emsp;可以通过PTE中的一些其他标志位来推断该PTE是否为叶子页表项。例如，PTE中的"Present"标志位指示该页表项指向的物理页是否被映射到了虚拟地址空间中。如果这个标志位被设置为 1，那么该PTE指向一个有效的物理页，这个PTE就不是叶子页表项。相反，如果这个标志位被设置为 0，那么该PTE指向的物理页没有映射到虚拟地址空间中，这个PTE就是叶子页表项。
 	<br>
-    &emsp;&emsp;另外，<a href="#pte">PTE</a>中的"Page Size"标志位也可以用于判断该<a href="#pte">PTE</a>是否为叶子页表项。如果这个标志位被设置为 1，那么该<a href="#pte">PTE</a>指向的是一个大页（通常为4KB的倍数），这个<a href="#pte">PTE</a>就不是叶子页表项。相反，如果这个标志位被设置为 0，那么该<a href="#pte">PTE</a>指向的是一个小页（通常为4KB），这个<a href="#pte">PTE</a>就是叶子页表项。
+    &emsp;&emsp;另外，PTE中的"Page Size"标志位也可以用于判断该PTE是否为叶子页表项。如果这个标志位被设置为 1，那么该PTE指向的是一个大页（通常为4KB的倍数），这个PTE就不是叶子页表项。相反，如果这个标志位被设置为 0，那么该PTE指向的是一个小页（通常为4KB），这个PTE就是叶子页表项。
 </div>
+
 
 
 ------
@@ -1085,9 +1119,9 @@ uvmdealloc(pagetable_t pagetable, uint64 oldsz, uint64 newsz)
 ------
 
 <div name="memory-mapped-control-registers">
-    memory-mapped control registers：
+    内存映射控制寄存器（memory-mapped control registers）：
 <br>
-    &emsp;&emsp;内存映射控制寄存器，一种硬件结构，可以访问内存中访问控制硬件设备的寄存器。
+    &emsp;&emsp;一种硬件结构，可以访问内存中访问控制硬件设备的寄存器。
 <br>
     &emsp;&emsp;通常用于与外围设备进行通信，如磁盘驱动器、网络接口卡等交互。
 <br>
@@ -1098,24 +1132,26 @@ uvmdealloc(pagetable_t pagetable, uint64 oldsz, uint64 newsz)
 	&emsp;&emsp;这种方式比直接访问硬件设备的寄存器更加灵活和方便。
 </div>
 
+
 ---
 
 <div name="satp-register">
     satp：
 <br>
-    &emsp;&emsp;<a href="#satp-register">satp寄存器</a>是RISC-V架构中用于设置地址转换的寄存器
+    &emsp;&emsp;satp寄存器是RISC-V架构中用于设置地址转换的寄存器
 <br>
 	&emsp;&emsp;该寄存器包含了当前正在运行的进程或操作系统所使用的页表信息，它将虚拟地址映射到物理地址，并提供了安全保护的功能。
 </div>
 
+
 ---
 
 <div name="<a href="#pte">PTE</a>">
-    <a href="#pte">PTE</a>（page table entries）：页表条目
+    PTE（page table entries）：页表条目
 	<br>
-    &emsp;&emsp;每个进程都有一个页表，页表中包含了每个虚拟页面对应的物理页面的信息，其中一个条目就是一个<a href="#pte">PTE</a>
+    &emsp;&emsp;每个进程都有一个页表，页表中包含了每个虚拟页面对应的物理页面的信息，其中一个条目就是一个PTE
 	<br>
-    &emsp;&emsp;<a href="#pte">PTE</a>一般包含以下信息：
+    &emsp;&emsp;PTE一般包含以下信息：
     <br>
     &emsp;&emsp;①物理页面的地址：用于指示该虚拟页面所对应的物理页面的地址。
     <br>
@@ -1124,30 +1160,33 @@ uvmdealloc(pagetable_t pagetable, uint64 oldsz, uint64 newsz)
     &emsp;&emsp;③标志位：用于指示该虚拟页面是否被映射到物理页面，是否被修改过。
 </div>
 
+
 ----
 
-<div name="<a href="#ppn">PPN</a>">
-    <a href="#ppn">PPN</a>（physical page number）：物理页面号，存储物理地址
+<div name="ppn">
+    PPN（physical page number）：物理页面号，存储物理地址
 <br>
-	&emsp;&emsp;当系统需要将虚拟地址转换为物理地址时，会根据页面映射关系找到对应的<a href="#pte">PTE</a>，然后从<a href="#pte">PTE</a>中提取出<a href="#ppn">PPN</a>，再将虚拟地址的页偏移量和<a href="#ppn">PPN</a>组合成物理地址
+	&emsp;&emsp;当系统需要将虚拟地址转换为物理地址时，会根据页面映射关系找到对应的PTE，然后从PTE中提取出PPN，再将虚拟地址的页偏移量和PPN组合成物理地址
 </div>
+
 
 ---
 
-<div name="<a href="#mmu">MMU</a>">
-    <a href="#mmu">MMU</a>（memory management unit）：
+<div name="mmu">
+    MMU（memory management unit）：
     <br>
     &emsp;&emsp;作用是实现虚拟内存到物理内存的映射，提供了一种从逻辑上连续的虚拟地址空间到物理地址空间的映射机制。
     <br>
-	&emsp;&emsp;<a href="#mmu">MMU</a>通过在内存中维护一个页表来管理虚拟地址空间和物理地址空间之间的映射关系。
+	&emsp;&emsp;MMU通过在内存中维护一个页表来管理虚拟地址空间和物理地址空间之间的映射关系。
     <br>
     <br>
-    &emsp;&emsp;Q：那么这里其实有一个关于<a href="#mmu">MMU</a>和satp之间是怎么运作的问题
+    &emsp;&emsp;Q：那么这里其实有一个关于MMU和satp之间是怎么运作的问题
 	<br>
-	&emsp;&emsp;A：实际上正如上文<a href="#mmu">MMU</a>的解释的那样，存储着虚拟地址和物理地址的映射关系，它负责将虚>拟地址转换成物理地址。
+	&emsp;&emsp;A：实际上正如上文MMU的解释的那样，存储着虚拟地址和物理地址的映射关系，它负责将虚>拟地址转换成物理地址。
 	<br>
-  	&emsp;&emsp;那么satp是用来指定当前正在使用的页表，而且最多只能存一个页表的物理地址和模式（S模式 和U模式），在RISC-V架构中，<a href="#satp-register">satp寄存器</a>的最高位（63位）为模式位，代表当前页表的模式，接下来的44位为页表物理地址（48位物理地址中的高44位），可能吧~
+  	&emsp;&emsp;那么satp是用来指定当前正在使用的页表，而且最多只能存一个页表的物理地址和模式（S模式 和U模式），在RISC-V架构中，satp寄存器的最高位（63位）为模式位，代表当前页表的模式，接下来的44位为页表物理地址（48位物理地址中的高44位），可能吧~
 </div>
+
 
 ---
 

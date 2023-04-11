@@ -136,3 +136,4 @@
 
 - wrapper：包装纸，封装（函数）
 - appropriate：合适的，适合的
+- prototype：原型

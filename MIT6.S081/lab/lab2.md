@@ -26,4 +26,19 @@
 
 ## lab
 
-回到实验中，
+回到实验中
+
+### System call tracing（moderate）
+
+hints：
+
+- 根据掩码输出指定的系统调用时，必须利用位运算确定是哪一位系统调用，即处理好`mask`和`num`的关系
+
+### Sysinfo（moderate）
+
+hints：
+
+- 通过`argaddr`传入的就是user space的地址
+- 最重要的是，`kmem.freelist`链表真的就是有的内存才在链表中，不是被占有了才会在链表中，当`kalloc`分配出了一部分内存，那么该`struct run`指针就会从`freelist`链表中消失
+
+总结：null
