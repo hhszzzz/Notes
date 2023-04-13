@@ -137,3 +137,9 @@
 - wrapper：包装纸，封装（函数）
 - appropriate：合适的，适合的
 - prototype：原型
+
+---
+
+23.04.12
+
+- eliminate：消除，排除

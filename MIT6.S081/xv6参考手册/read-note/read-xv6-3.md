@@ -222,8 +222,8 @@ found:
 
 > `context`结构体是用于在内核上下文切换过程中保存寄存器状态的。该结构体保存的成员变量是一些在内核上下文切换中需要保存的寄存器状态，具体来说：
 >
-> - `ra`：保存返回地址寄存器的值，指示从函数调用中返回时应返回的地址。
-> - `sp`：保存栈指针寄存器的值，指示当前栈的位置。
+> - `ra`：保存返回地址寄存器的值，指示**从函数调用中返回时应返回的地址**。
+> - `sp`：保存栈指针寄存器的值，指示**当前栈的位置**。
 > - `s0 - s11`：保存调用者保存的寄存器的值，这些寄存器在函数调用过程中需要被保存，以便在函数返回时可以恢复它们的值。
 
 #### uvmcopy函数
@@ -377,23 +377,27 @@ struct trapframe {
 
 在阅读到`copyout`和`copyin`后（kernel/vm.c），可以解释这两个函数的作用。
 
-在内核空间和用户空间之间进行数据传输，具体来说，它们将数据从内核缓存区（内核与用户之间的一种隔离isolation）复制到用户空间的虚拟地址，或者将数据从用户空间的虚拟地址到内核缓冲区。
+作用就是，在内核空间和用户空间之间进行数据传输，具体来说，它们将数据从内核缓存区（内核与用户之间的一种隔离isolation）复制到用户空间的虚拟地址，或者将数据从用户空间的虚拟地址到内核缓冲区。
 
-- #### `copyin`
+- #### `copyin`（user to kernel）
 
   <img src="https://picgo-picture-storage.oss-cn-guangzhou.aliyuncs.com/img/1678886214034.jpg"  />
 
   `copyin`函数的参数包括一个页表（pagetable_t）、一个目标地址（dst）、一个源地址（srcva）和要复制的字节数（len），提供了用户进程向内核传递数据的方法。
 
-  <a  href="#walkaddr">walkaddr</a>函数的解析可以往这里看，在这里我画了一个流程图辅助理解
+  <a  href="#walkaddr">walkaddr</a>函数的解析可以往这里看，在这里我画了一个流程图辅助理解copy机制
 
   <img src="https://picgo-picture-storage.oss-cn-guangzhou.aliyuncs.com/img/c553f841ff4aa42f3ef7e7f01ca3c5c.jpg" style="zoom: 50%;" />
 
-- #### `copyout`
+- #### `copyout`（kernel to user）
 
   <img src="https://picgo-picture-storage.oss-cn-guangzhou.aliyuncs.com/img/1678886292017.jpg"  />
 
   同`copyin`相同，只不过这次互换角色了而已
+
+实际上，虽然内核提供了这两种方式来实现用户与内核的数据交换，但是这两个函数只能在内核中使用，就像在下图中(lab2实验内容)，我们将sysinfo结构体的地址传给了addr（从用户那里得到的地址），那么此时用户就可以通过访问addr来得到sysinfo结构体了。
+
+![image-20230411143650708](https://picgo-picture-storage.oss-cn-guangzhou.aliyuncs.com/img/image-20230411143650708.png)
 
 ---
 
@@ -403,13 +407,15 @@ A：一个进程确实是对应一个页表，但是页表不是用来存数据�
 
 实际上这些映射关系指向的物理地址中存放了实际的数据。因此，数据时存放在页面中，而不是存放在页表中。
 
-> tips：**页面和页表的大小都是4KB**
+> tips：**页面和页表的大小都是4KB**，在kalloc函数中可以观察到，最后分配PGSIZE的内存
+>
+> ![image-20230411202624148](https://picgo-picture-storage.oss-cn-guangzhou.aliyuncs.com/img/image-20230411202624148.png)
 
 ---
 
 - #### `kvminithart()`
 
-  ```cpp
+  ```c
   // Switch h/w page table register to the kernel's page table,
   // and enable paging.
   void
@@ -466,22 +472,26 @@ A：一个进程确实是对应一个页表，但是页表不是用来存数据�
 
   <img src="https://picgo-picture-storage.oss-cn-guangzhou.aliyuncs.com/img/1679294379619.png"  />
 
-  xv6在重新加载<a href="#satp-register">satp寄存器</a>后在`kvminithart`中执行`sfence.vma`，在返回用户空间之前在切换到用户页表的 `trampoline` 代码中执行 `sfence.vma`(kernel/trampoline.S:79)。
+  xv6在重新加载<a href="#satp-register">satp寄存器</a>后在`kvminithart`中执行`sfence.vma`，在返回用户空间之前在切换到用户页表的 `trampoline` 代码中执行 `sfence.vma`(kernel/trampoline.S:79).
 
   以上在代码中均能找到
 
-  <img src="https://picgo-picture-storage.oss-cn-guangzhou.aliyuncs.com/img/1679294458976.png" style="zoom:85%;" />
-
-  <img src="https://picgo-picture-storage.oss-cn-guangzhou.aliyuncs.com/img/1679294338724.png" style="zoom:80%;" />
+  ![image-20230411212844349](https://picgo-picture-storage.oss-cn-guangzhou.aliyuncs.com/img/image-20230411212844349.png)
 
 - #### `procinit`
+
+  ![image-20230411213218444](https://picgo-picture-storage.oss-cn-guangzhou.aliyuncs.com/img/image-20230411213218444.png)
 
   好，那么回到原文，`main`调用`procinit`为每个进程分配内核堆栈。为每个堆栈映射到由`KSTACK`生成的虚拟地址，从而为保护页（invalid）留出空间。
 
   <img src="https://picgo-picture-storage.oss-cn-guangzhou.aliyuncs.com/img/1679296431415.png"  />
 
+  `TRAMPOLINE`是物理内存最高点（真正意义上，不是`PHYSTOP`），所以在`KSTACK`中会通过它来计算，还要空出guard pages
+  
+  ![image-20230411213535445](https://picgo-picture-storage.oss-cn-guangzhou.aliyuncs.com/img/image-20230411213535445.png)
+  
   ##### <span name="proc">结构体</span>`proc`：
-
+  
   ```c
   // Per-process state
   struct proc {
@@ -521,7 +531,7 @@ A：一个进程确实是对应一个页表，但是页表不是用来存数据�
 
   ---
 
-  回到`procinit`函数
+  回到`procinit`函数，可以观察到获取了pid_lock
 
   <img src="https://picgo-picture-storage.oss-cn-guangzhou.aliyuncs.com/img/7aa9465457e9ce7135f310dc054b67a.png"  />
 
@@ -530,6 +540,8 @@ A：一个进程确实是对应一个页表，但是页表不是用来存数据�
   <img src="https://picgo-picture-storage.oss-cn-guangzhou.aliyuncs.com/img/1679307091346.png"  />
 
   **不难猜测出`pid_lock`是一个用于创建新进程的锁，只有获取了它之后，才能够进行创建新进程的操作。**
+
+  这里还告诉我们，pid是一个一个分配的，分配完就让nextpid+1。
 
   ---
 
@@ -541,7 +553,7 @@ A：一个进程确实是对应一个页表，但是页表不是用来存数据�
 
   这里初始化了锁`lk`的名字（name）、状态（`locked`）、被哪个cpu持有（0表示没有）
 
-  那么为什么要起一个`spinlock`呢，继续追
+  那么为什么要起一个`spinlock`呢，查看结构体`spinlock`
 
   <img src="https://picgo-picture-storage.oss-cn-guangzhou.aliyuncs.com/img/1a2fa0fda608de00e20c058ba3bb8eae_.png"  />
 
@@ -553,24 +565,24 @@ A：一个进程确实是对应一个页表，但是页表不是用来存数据�
 
   经典阅读理解......根据注释，不难理解`wait_lock`可以确保父进程在等待子进程退出时，不会错过任何子进程退出的通知（如果不使用该锁，当多个子进程同时退出时，父进程可能会错过其中的一些通知，从而导致等待超时或者其他的问题）
 
-  另外，`wait_lock`必须比任何`p->lock`更先获取，如果反过来，那么可能会导致死锁或者其他问题（详情请参考`wait`函数）。
+  另外，`wait_lock`必须比任何`lock`更先获取，如果反过来，那么可能会导致死锁或者其他问题（详情请参考`wait`函数）。
 
-  综上，`initlock`就是初始化锁的数据，说远了......厚礼谢。
+  综上，`initlock`就是初始化锁的数据。
 
   ---
 
-  那么接下来就是对每个进程进行循环，`NPROC`也是老朋友了（**允许的最大进程数64**），初始化每个进程，然后自然是看不懂`p->kstack = KSTACK((int) (p - proc));`，没关系，继续冲
+  (kernel/proinit:53)那么接下来就是对每个进程进行循环，`NPROC`也是老朋友了（**允许的最大进程数64**），初始化每个进程，然后自然是看不懂`p->kstack = KSTACK((int) (p - proc));`，没关系，继续冲
 
-  <img src="https://picgo-picture-storage.oss-cn-guangzhou.aliyuncs.com/img/1679311090180.png" style="zoom:80%;" />
+  <img src="https://picgo-picture-storage.oss-cn-guangzhou.aliyuncs.com/img/1679311090180.png"  />
 
-  从这里就可以看出来了，**内核页表就只是一个页表的大小而已！！！**（我好像之前写错了），`TRAMPOLINE`所代表的就是用户与内核直接的隔阂，也是用户的最高地址
-
+  从这里就可以看出来了，**内核页表就只是一个页表的大小而已！**，`TRAMPOLINE`所代表的就是用户与内核直接的隔阂，也是用户的最高地址
+  
   然后`KSTACK`宏定义的注释解释了内核栈是在`trampoline`下的，每一个都被保护页包裹着，其实代码也能看出来，每次都是`(p)*2`，应该是留出给保护页（这里的保护页好像不需要再申请之类的，因为没有定义，就是无效的，就可以提供保护的作用）的空间。所以！`KSTACK`的作用就是计算进程的内核栈起始地址，而`trampoline`是**内核栈顶**。
-
+  
   那么这段代码就好解释了，`(p-proc)`是进程在进程（[todo][]有这个东西嘛？）表中的索引号，综合来说，这行代码的作用是：根据该进程在进程表中的索引号，将当前进程的内核栈起始地址计算出来，并将其存储在进程控制块中的`kstack`字段中。这样就可以通过使用`p->kstack`来使用内核栈了！！！
-
+  
   好，终于，`procinit`结束了！
-
+  
   ---
 
 激动地进入3.4
@@ -581,29 +593,25 @@ A：一个进程确实是对应一个页表，但是页表不是用来存数据�
 
   <img src="https://picgo-picture-storage.oss-cn-guangzhou.aliyuncs.com/img/1679312647837.png"  />
 
-  通过维护一个物理页的链表来寻找哪些内存页面当前可用和哪些已经被分配，**噢噢！这里就是内存**。分配新内存时，os需要从链表中移除一个**可用页面**（这里我一开始理解为移除别的进程正在使用的，原来是一个可用的）来分配给该进程使用，这个过程被称为"Allocation"（分配）；相反，当一个进程释放一个页面时，os会将该页面添加回链表中以便下次可以被重新分配给其他进程使用，这个过程被称为"Freeing"（释放）
-
-  好耶，3.4结束了
+  通过维护一个物理页的链表来寻找哪些内存页面当前可用和哪些已经被分配，**这就是内存！**分配新内存时，os需要从链表中移除一个**可用页面**（这里我一开始理解为移除别的进程正在使用的，原来是一个可用的）来分配给该进程使用，这个过程被称为"Allocation"（分配）；相反，当一个进程释放一个页面时，os会将该页面添加回链表中以便下次可以被重新分配给其他进程使用，这个过程被称为"Freeing"（释放）
 
 ---
-
-  现在苦逼的3.5，算了，明天再看吧！
 
   ## 五、物理内存分配器
 
   ### `kinit`函数
 
-在`kinit`函数中，初始化锁`kmem`，然后进入`freerange(end, (void*)PHYSTOP)`函数
+在`kinit`函数中，初始化锁`kmem.lock`，然后进入`freerange(end, (void*)PHYSTOP)`函数
 
   <img src="https://picgo-picture-storage.oss-cn-guangzhou.aliyuncs.com/img/1679399471206.png"  />
 
-那么这里的PHYSTOP代表了最高的物理地址，`end`又表示什么呢？于是我找到了这段。
+那么这里的`PHYSTOP`代表了最高的物理地址，`end`又表示什么呢？于是我找到了这段。
 
   ![](https://picgo-picture-storage.oss-cn-guangzhou.aliyuncs.com/img/1679399574722.png)
 
 注释说明了是继内核之后的第一个地址，即内核的终点
 
-于是我又找到了文件 kernel.ld
+于是我又找到了文件 `kernel.ld`
 
   ```c
   OUTPUT_ARCH( "riscv" )
@@ -655,25 +663,27 @@ A：一个进程确实是对应一个页表，但是页表不是用来存数据�
 
 虽然我看不懂链接器脚本（Linker Script），但是GPT可以啊！
 
-在这个链接脚本中，`.text`部分定义了操作系统内核代码段（可能就是图4中的`kernel text`），`.rodata`部分定义了只读数据段，`.data`部分定义了读写数据段（`kernle data`），`.bss`部分定义了未初始化的数据段
+在这个链接脚本中，`.text`部分定义了操作系统内核代码段，可执行代码（可能就是图4中的`kernel text`），`.rodata`部分定义了只读数据段，`.data`部分定义了可读写数据段（`kernle data`），`.bss`部分定义了未初始化的数据段
+
+在第10行中出现`. = 0x80000000`，在43行中`PROVIDE(end = .)`，可以得知，链接器将end符号的值设置为了`0x80000000`
 
 > 综上，`kinit`是初始化从内核末尾到最高物理地址的空间
 
   ### `freerange`函数
 
-然后深入`freerange`函数
-
   ![](https://picgo-picture-storage.oss-cn-guangzhou.aliyuncs.com/img/1679400638241.png)
 
-前面的都能理解，（根据偏移量）向上取整`pa_start`复制给p（这里向上取整是有讲究的，因为如果下取整到了内核的数据代码等，就有可能会出问题。而且还有一个与之相对的函数`PGROUNDDOWN`在我的`trace_userinit`文章中有讲到），然后从`pa_start`到`pa_end`进行`kfree`函数
+前面的都能理解，（根据偏移量）向上取整`pa_start`复制给p（这里向上取整是有讲究的，因为如果下取整到了内核的数据代码等，就有可能会出问题。（还有一个与之相对的函数`PGROUNDDOWN`在我的`trace_userinit`文章中有讲到）），然后从`pa_start`到`pa_end`进行`kfree`函数
 
   #### `kfree`函数
 
   ![](https://picgo-picture-storage.oss-cn-guangzhou.aliyuncs.com/img/1679401337901.png)
 
+`kfree`本质上就是通过一个页表的物理地址，将页表重置，并且加入到`kmem.freelist`中。
+
 free `v` 指向的物理内存页（这里注释应该有问题，应该将`v`改为`pa`），该物理内存页一般通过`kalloc`函数调用返回（如果初始化分配器异常，查看上面的`kinit`）
 
-那么经过向上取整之后的`pa`（freerange的p）应该不太可能会出现51行if前两个条件，那么如果有了，就报错呗~
+那么经过向上取整之后的`pa`（freerange的`PGROUNDUP`）应该不太可能会出现51行if前两个条件，那么如果有了，就报错呗~
 
 55行，注释解释了，在代码中填充一些随机数据，以便在程序中引用一个未初始化或已经释放的内存时，可以更容易地发现这些问题，从而避免程序崩溃或出现其他错误。小tips：这样的填充的数据通常被称为"垃圾值"（`junk value`）或"毒草"（`poison`）
 
@@ -687,26 +697,22 @@ free `v` 指向的物理内存页（这里注释应该有问题，应该将`v`�
 
 **分配器代码中的类型转换：**
 
-分配器有时将地址视为整数以便对其执行算术运算(例如，遍历`freerange`中的所有page)，有时将地址用作读写内存的指针(例如，操作存储在每个页面中的`run`结构体)。这种对地址的双重使用是分配器代码充满C类型转换的主要原因。另一个原因是释放和分配内存固有地改变了内存的类型。 
+分配器有时将地址视为整数以便对其执行算术运算（例如，遍历`freerange`中的所有page），有时将地址用作读写内存的指针（例如，操作存储在每个页面中的`run`结构体）。这种对地址的双重使用是分配器代码充满C类型转换的主要原因。另一个原因是释放和分配内存固有地改变了内存的类型。 
 
 ---
 
-终于结束了3.5！！
-
-今天3.6（进程地址空间）
-
 ## 进程地址空间
 
-**进程申请用户内存**：当用户进程向xv6请求更多用户内存时，xv6先调用`kalloc`来分配物理页。然后将<a href="#pte">PTE</a>添加到进程的页表中，（<a href="#pte">PTE</a>）指向新的物理页。xv6在<a href="#pte">PTE</a>中设置各种标示（`PTE_W`、`PTE_X`等等），大多数进程都不会用到整个用户地址空间，xv6将未使用的<a href="#pte">PTE</a>中的`PTE_V`清除。
+**进程申请用户内存**：当用户进程向xv6请求更多用户内存时，xv6先调用`kalloc`来分配物理页。然后将<a href="#pte">PTE</a>添加到进程的页表中，（PTE）指向新的物理页。xv6在PTE中设置各种标示（`PTE_W`、`PTE_X`等等），大多数进程都不会用到整个用户地址空间，xv6将未使用的PTE中的`PTE_V`清除。
 
-那么，具体代码体现，我也找到了，嘿嘿（kernel/vm.c:233）`uvmalloc`函数。
+那么具体代码体现，我也找到了，（kernel/vm.c:233）`uvmalloc`函数。
 
 ### `uvmalloc`函数
 
 ```c
 // Allocate <a href="#pte">PTE</a>s and physical memory to grow process from oldsz to
 // newsz, which need not be page aligned.  Returns new size or 0 on error.
-// 为增长进程（的内存）分配<a href="#pte">PTE</a>s和物理内存，从oldsz增长到newsz
+// 为增长进程（的内存）分配PTEs和物理内存，从oldsz增长到newsz
 // 还不需要页面对齐？为啥?待会解释
 // 返回一个 new size/0(error)
 uint64
@@ -730,7 +736,8 @@ uvmalloc(pagetable_t pagetable, uint64 oldsz, uint64 newsz)
     // 申请到了，就初始化，然后映射到pagetable中，给予四个权限，a是va，mem是pa
     // 同样的如果不能正确映射，就取消分配mem内存，并且(a)Deallocate到(oldsz)
     // 其实这里我有个疑问，之前申请的mem怎么办？不能像uvmdealloc一样取消吗？
-    if(mappages(pagetable, a, PGSIZE, (uint64)mem, <a href="#pte">PTE</a>_W|<a href="#pte">PTE</a>_X|<a href="#pte">PTE</a>_R|<a href="#pte">PTE</a>_U) != 0){
+    // 往下看，会有解释的(uvmunmap)
+    if(mappages(pagetable, a, PGSIZE, (uint64)mem, PTE_W | PTE_X | PTE_R | PTE_U) != 0){
       kfree(mem);
       uvmdealloc(pagetable, a, oldsz);
       return 0;
@@ -740,15 +747,33 @@ uvmalloc(pagetable_t pagetable, uint64 oldsz, uint64 newsz)
 }
 ```
 
-个人总结：**xv6中是用某个进程的pagetable通过mappages将内存映射到三级页表的某个<a href="#pte">PTE</a>当中，就在`PTE = PA2PTE(pa) | parm | PTE_V`这句代码中体现**
+> 个人总结：**xv6中是用某个进程的pagetable通过mappages将内存映射到三级页表的某个PTE当中，就在` *pte= PA2PTE(pa) | perm | PTE_V`(mappage)这句代码中体现**
 
-这句话绝对是精华，值得细品，整合了`mappages`、`walk`、`kalloc`等函数，阐明了分配内存和页表之间的关系，`*pte`表示了<a href="#pte">PTE</a>的地址就是这个物理地址（内存的地址）附加上各种标志（<a href="#pte">PTE</a>_xxx）
+这句话绝对是精华，值得细品，整合了`mappages`、`walk`、`kalloc`等函数，阐明了分配内存和页表之间的关系，`*pte`表示了PTE的地址就是这个物理地址（内存的地址）附加上各种标志（PTE_xxx）
 
 所以，`uvmalloc`用于为进程分配内存，它可以在进程虚拟地址空间中分配任意大小的内存，而不需要对齐到页边界，在os中，虚拟内存管理是以页为单位进行的，这意味着os可以将进程的虚拟地址空间中的任意内存地址映射到物理内存页中的任意位置。
 
+> 插播一段有关`PGROUNDUP`和`PGROUNDDOWN`的使用场景：
+>
+> - `PGROUNDUP`：确保分配的内存大小是页面的倍数，以便在虚拟内存系统中进行管理（例如，给定大小为10000bytes，利用该函数舍入为12288子节(3个页面大小)）
+>
+>   目前我遇到的使用场景基本上都是，防止向下释放或触及到不希望的内存地址
+>
+>   `PGROUNDUP`得到的结果会是上一个页面的起始地址（`0x1000`$\rightarrow$`0x2000`，而一个页面的结束位置是`0x1fff`，因此在某些情况下，访问超出页面的结束位置，会导致向上访问内存错误）
+>
+> - `PGROUNDDOWN`：计算内存块的起始地址，以便将其与页面对齐（以上面的为例，使用该函数将其舍入为8192子节(2个页面大小)）
+>
+>   目前的使用场景：防止向上释放或触及到不希望的内存地址
+>
+>   `PGROUNDDOWN`得到的结果是下一个页面的起始地址（`0x1000`$\rightarrow$`0x0000`，同样的，有的时候访问低于页面的起始位置，也会导致出错）
+>
+> 总结：看具体场景，只要不访问不该访问的东西就可以任意使用，不影响系统的正确性和性能
+
 当进程需要分配内存时，os会分配足够的物理内存页，并将这些页映射到进程的虚拟地址空间中。因此，**对于进程来说，内存分配的单位不是物理内存页，而是虚拟地址空间中的任意内存地址。**
 
-在`uvmalloc`函数中，所需内存大小通过参数传递，该函数会尝试分配足够的物理内存页，并将这些页映射到进程的虚拟地址空间中，由于os可以任意内存地址映射到物理页总的任意位置，因此不需要对齐到页边界。
+在`uvmalloc`函数中，所需内存大小通过参数传递，该函数会尝试分配足够的物理内存页，并将这些页映射到进程的虚拟地址空间中，由于os可以将任意内存地址（虚拟）映射到物理页中的任意位置，因此不需要对齐到页边界。
+
+吐槽一点：明明书上说不需要对齐，但实际上代码还是采用了对齐`oldsz = PGROUNDUP(oldsz);`
 
 ### `uvmdealloc`函数
 
@@ -768,7 +793,7 @@ uvmdealloc(pagetable_t pagetable, uint64 oldsz, uint64 newsz)
 {
   if(newsz >= oldsz)
     return oldsz;
-  // 这里规范了newsz和oldsz页的大小，使得uvmunmao得以正确处理映射关系
+  // 这里规范了newsz和oldsz页的大小，使得uvmunmap得以正确处理映射关系
   if(PGROUNDUP(newsz) < PGROUNDUP(oldsz)){
     int npages = (PGROUNDUP(oldsz) - PGROUNDUP(newsz)) / PGSIZE;
     uvmunmap(pagetable, PGROUNDUP(newsz), npages, 1);
@@ -780,7 +805,7 @@ uvmdealloc(pagetable_t pagetable, uint64 oldsz, uint64 newsz)
 
 解释为什么不需要对齐到页边界：该函数主要是用来释放不再被进程使用的内存，而不是分配新的内存。具体来说，该函数会通过迭代页表，将`oldsz`到`newsz`之间的内存范围内的所有页面释放。这意味着，如果某个页面的一部分在该范围内，那么该页面就需要被释放，即使它的起始地址不是页边界对齐的。
 
-[todo-finish][]这里`uvmdealloc()`还没讲完呢，还有`uvmunmap()`还没追，可能这里可以解答我前面在`uvmalloc()`注释里面留下的一个疑惑
+这里`uvmdealloc()`还没讲完，还有`uvmunmap()`还没追，可能这里可以解答我前面在`uvmalloc()`注释里面留下的一个疑惑
 
 这里贴出`uvmunmap`函数的代码，该函数用于取消页面映射
 
@@ -788,7 +813,7 @@ uvmdealloc(pagetable_t pagetable, uint64 oldsz, uint64 newsz)
 
 这里提到了一个概念：<a href="#leaf-PTE">叶子页表项</a>
 
-那么在看完该函数之后，我明白了原来`uvmunmap`函数的工作就像`uvmdealloc`一样（相当于撤回操作）
+那么在看完该函数之后，我明白了原来`uvmunmap`函数的工作就是取消映射`npages`个页面，还包括调用`kfree`函数（相当于撤回操作）
 
 ---
 
@@ -798,13 +823,11 @@ uvmdealloc(pagetable_t pagetable, uint64 oldsz, uint64 newsz)
 
 ![在这里插入图片描述](https://img-blog.csdnimg.cn/ed2dd5a8fadf4f21a65ae55635a378d1.png)
 
-下面来介绍xv6的用户内存布局，如上图
+下面来介绍xv6的用户内存布局，如上图，栈是一个page，显示的是`exec`创建后的初始内容。
 
-栈是一个page，显示的是`exec`创建后的初始内容。
+![image-20230412154950811](https://picgo-picture-storage.oss-cn-guangzhou.aliyuncs.com/img/image-20230412154950811.png)
 
-栈的顶部，有命令行参数的字符串，以及指向它们的指针
-
-再往下是允许程序在`main`处启动的值（`main`的`argc`和`argv`），就像`main(argc, argv)`被调用一样。
+栈的顶部，有命令行参数的字符串，以及指向它们的指针，再往下是允许程序在`main`处启动的值（`main`的`argc`和`argv`），就像`main(argc, argv)`被调用一样。
 
 我们注意到用户内存布局中还存在着保护页（在栈的正下方），用于检测用户栈是否溢出了已分配的堆栈内存。如果用户栈溢出并且进程试图使用栈下方的地址，由于映射无效，硬件将生成页面错误异常。事实上，操作系统可能会在用户栈溢出的时候自动为其分配更多内存。
 
@@ -812,11 +835,11 @@ uvmdealloc(pagetable_t pagetable, uint64 oldsz, uint64 newsz)
 
 ## `sbrk` and `exec`
 
-今天来学3.7 and 3.8（主要是围绕着代码来讲的）
+主要是围绕着代码来讲这两个调用
 
 - ### `sbrk`
 
-  `sbrk`是用来增加或缩小进程的内存的一个系统调用，具体实现为函数`growproc`，在代码上可以观察到，发现又有很多不清楚的函数，唉~又是一段深深代码路~开干吧！
+  `sbrk`是用来增加或缩小进程的内存的一个系统调用`sys_sbrk`，具体实现为函数`growproc`
 
   <img src="https://picgo-picture-storage.oss-cn-guangzhou.aliyuncs.com/img/1679532358753.png"  />
 
@@ -824,9 +847,7 @@ uvmdealloc(pagetable_t pagetable, uint64 oldsz, uint64 newsz)
 
   <img src="https://picgo-picture-storage.oss-cn-guangzhou.aliyuncs.com/img/1679532484302.png"  />
 
-  [todo-finish][]我这里还想研究一下cpu呢，别急，待会就有机会了
-
-  那么直接观察到`push_off()`以及`pop_off()`，可以联想到栈，对吧，啊其实不是，是有关中断的，下面放它们的代码，我的注释先别急着看，先看看下面的代码追踪~
+  那么直接观察到`push_off()`以及`pop_off()`，可以联想到栈，对吧，啊其实不是，其实是有关中断的，下面放它们的代码，我的注释先别急着看，先看看下面的代码追踪~
 
   <img src="https://picgo-picture-storage.oss-cn-guangzhou.aliyuncs.com/img/1679538346236.png"  />
 
@@ -836,7 +857,7 @@ uvmdealloc(pagetable_t pagetable, uint64 oldsz, uint64 newsz)
 
     <img src="https://picgo-picture-storage.oss-cn-guangzhou.aliyuncs.com/img/1679533856341.png"  />
 
-    该函数的作用是：**检查当前处理器中断是否启用**
+    该函数的作用是：**检查当前处理器中断是否启用，返回1：启用，0：关闭**
 
     从`r_sstatus()`中读取状态寄存器的值，储存在64位无符号整数变量x中
 
@@ -850,9 +871,9 @@ uvmdealloc(pagetable_t pagetable, uint64 oldsz, uint64 newsz)
 
     这段代码是**用来禁用设备中断**的，使用了内联汇编（嵌套函数？）的方式来执行指令。
 
-    这段代码使用了`r_sstatus()`和`w_sstatus()`两个函数（这个就别深究了，跟那个讨厌的`w_satp()`一样，都看不明白-_-），分别是用来读取和写入状态寄存器（特殊的寄存器，用于保存处理器cpu的各种状态信息，包括中断使能位、当前特权级、异常处理模式等）的。
+    这段代码使用了`r_sstatus()`和`w_sstatus()`两个函数（这个就别深究了，跟那个讨厌的`w_satp()`一样，都看不明白-_-），分别是用来读取和写入**状态寄存器**（特殊的寄存器，用于保存处理器cpu的各种状态信息，包括中断使能位、当前特权级、异常处理模式等）
 
-    通过将状态寄存器的SIE字段（上面提到的中断使能位）设置为0来禁用设备中断。具体来说，代码通过调用`r_sstatus()`来读取当前状态寄存器的值，然后通过& ~位运算来将SIE字段设置为0。最后，代码通过调用`w_sstatus()`将修改后的状态寄存器的值写回到寄存器中。
+    通过将状态寄存器的SIE字段（上面提到的中断使能位）设置为0来禁用设备中断。具体来说，代码通过调用`r_sstatus()`来读取当前状态寄存器的值，然后通过`& ~`位运算来将SIE字段设置为0。最后，代码通过调用`w_sstatus()`将修改后的状态寄存器的值写回到寄存器中。
 
   - #### `mycpu()`
 
@@ -862,28 +883,28 @@ uvmdealloc(pagetable_t pagetable, uint64 oldsz, uint64 newsz)
 
     <img src="https://picgo-picture-storage.oss-cn-guangzhou.aliyuncs.com/img/1679534400792.png"  />
 
-    调用`cpuid()`函数时，必须先禁用中断，以防止进程被移动到不同的cpu上，从而产生竞态条件问题，这是因为当进程被移动到不同的cpu上时，他的cpuid也会发生变化，因此在中断被禁止的情况下调用`cpuid()`可以保证返回的是当前cpu的正确id。
+    调用`cpuid()`函数时，必须先禁用中断，以防止进程被移动到不同的cpu上，从而产生竞态条件问题，这是因为当进程被移动到不同的cpu上时，它的cpuid也会发生变化，因此在中断被禁止的情况下调用`cpuid()`可以保证返回的是当前cpu的正确id。
 
     
 
     `mycpu()`接下来通过全局数组cpus找到第id个cpu，并返回该cpu结构体的指针
 
-    需要注意的是，调用`mycpu()`函数时，必须先禁用中断，否则可能会出现<a href="#race-condition">竞态条件</a>（race condition）的问题
+    需要注意的是，调用`mycpu()`函数时，必须先禁用中断，否则也可能会出现<a href="#race-condition">竞态条件</a>（race condition）的问题
 
   - #### `struct cpu`结构体
 
     <img src="https://picgo-picture-storage.oss-cn-guangzhou.aliyuncs.com/img/1679536341487.png"  />
 
     - `proc`：在该cpu上运行的进程，多个、单个、或者没有
-    - `context`：（与上面的<a href="#proc">proc</a>相配合）保存当前进程的一些信息
+  - `context`：（与上面的<a href="#proc">proc</a>相配合）保存当前进程的一些信息
     - `noff`：用于记录当前禁用中断的嵌套深度，每执行一次`push_off()`函数，noff就增加1，表示中断禁用的嵌套深度增加了1，当执行`pop_off()`函数时，noff变量的值会减少1，表明中断禁用的嵌套深度减少了1。
-    - `intena`：用于记录在调用`push_off()`函数之前，中断是否被禁用。如果中断被禁用，那么intena的值为0，否则为1。在执行`pop_off()`时，如果intena的值为1，则会重新开启中断，否则不开启（这段话表明了，只有在禁用(开启)中断的条件下，才可以禁用(开启)更高优先级的中断）。确保中断的嵌套禁用和开启能够正确地工作，保证系统的稳定性和安全性。
-
+    - `intena`：用于记录在调用`push_off()`函数之前，中断是否被禁用。如果中断被禁用，那么intena的值为0，否则为1。在执行`pop_off()`时，如果intena的值为1，则会重新开启中断，否则不开启（这段话表明了，只有在禁用(开启)中断的条件下，才可以禁用(开启)更高优先级的中断）。确保中断的嵌套禁用和开启能够正确地工作，保证系统的稳定性和安全性。[todo][]具体用例暂时还不清楚，希望能在4找到答案！
+  
   - #### `intr_on()`（原子操作）
 
     <img src="https://picgo-picture-storage.oss-cn-guangzhou.aliyuncs.com/img/1679538054871.png"  />
 
-    与`intr_off()`相反，该函数用于开启设备中断，和上面一样，就不细说了。
+    与`intr_off()`相反，**该函数用于开启设备中断**，和上面一样，就不细说了。
 
   现在又回到了`growproc`函数，不过也没啥好讲的了，就是看增长还是缩小了n bytes
 
@@ -891,10 +912,12 @@ uvmdealloc(pagetable_t pagetable, uint64 oldsz, uint64 newsz)
 
 - ### `exec`：这是一个很重要的函数
 
+  在先前第二章的时候也提到过了这个函数
+
   在(kernel/exec:13)找到了exec函数，我超...怎么这么长啊...
 
   先贴出代码哈，可能会有点多
-
+  
   ```c
   int
   exec(char *path, char **argv)
@@ -1024,7 +1047,7 @@ uvmdealloc(pagetable_t pagetable, uint64 oldsz, uint64 newsz)
 
   #### `proc_pagetable`函数
 
-  `exec`使用`proc_pagetable`(kernel/exec.c:38)分配一个没有用户映射的新页表
+  `exec`使用`proc_pagetable`(kernel/exec.c:38)**分配一个没有用户映射的新页表**
 
   <img src="https://picgo-picture-storage.oss-cn-guangzhou.aliyuncs.com/img/1679553539253.png" style="zoom:80%;" />
 
@@ -1034,7 +1057,7 @@ uvmdealloc(pagetable_t pagetable, uint64 oldsz, uint64 newsz)
 
   <img src="https://picgo-picture-storage.oss-cn-guangzhou.aliyuncs.com/img/1679553613234.png"  />
 
-  `uvmcreate()`函数是用于创建用户页表的，调用了`kalloc()`，让页表拥有一段内存空间，后面就是分配的处理
+  `uvmcreate()`函数是**用于创建用户页表的**，调用了`kalloc()`，让页表拥有一段内存空间，后面就是分配的处理
 
   ##### `uvmfree`函数
 
@@ -1042,7 +1065,7 @@ uvmdealloc(pagetable_t pagetable, uint64 oldsz, uint64 newsz)
 
   <img src="https://picgo-picture-storage.oss-cn-guangzhou.aliyuncs.com/img/1679553899575.jpg"  />
 
-  从代码上看来确实是这样，如果有该页表已经分配了大小`sz`的内存，那么会先调用`uvmunmap`释放内存，然后再调用`freewalk`销毁页表
+  从代码上看来确实是这样，如果有该页表已经分配了大小`sz`的内存，**那么会先调用`uvmunmap`释放内存，然后再调用`freewalk`销毁页表**
 
   ###### `freewalk`函数
 
@@ -1066,10 +1089,10 @@ uvmdealloc(pagetable_t pagetable, uint64 oldsz, uint64 newsz)
 
   #### `walkaddr`函数
 
-  `walkaddr`<span name="walkaddr">函数</span>：同一个进程当中，通过虚拟地址返回物理地址
+  `walkaddr`<span name="walkaddr">函数</span>：**同一个进程当中，通过虚拟地址返回物理地址**
 
   <img src="https://picgo-picture-storage.oss-cn-guangzhou.aliyuncs.com/img/1679556066269.png" style="zoom:80%;" />
-
+  
   <a href="#init">/init</a>是一个程序段头，它是通过`exec`创建的第一个用户程序。
   
   ![](https://img-blog.csdnimg.cn/0e111cbcadd0498ea109d5ddb96c41ed.png)
@@ -1080,7 +1103,7 @@ uvmdealloc(pagetable_t pagetable, uint64 oldsz, uint64 newsz)
   
   <img src="https://picgo-picture-storage.oss-cn-guangzhou.aliyuncs.com/img/1679557879192.png" style="zoom:80%;" />
   
-  `exec`一次将参数中的字符串复制到栈顶，并将指向它们的指针存在`ustack`中。并且在`ustack`的末尾放置一个空指针。`ustack`的前三个条目分别是：虚假返回程序计数器、`argc`和`argv`指针。
+  `exec`一次将参数中的字符串复制到栈顶，并将指向它们的指针存在`ustack`中。并且在`ustack`的末尾放置一个空指针。`ustack`的前三个条目分别是：虚假返回程序计数器、`argc`和`argv`指针。（其实前面Figure 3.4也提到过了）
   
   <img src="https://picgo-picture-storage.oss-cn-guangzhou.aliyuncs.com/img/1679558054481.png" style="zoom:80%;" />
   
