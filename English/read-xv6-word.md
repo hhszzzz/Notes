@@ -22,7 +22,7 @@
 - alternate：（n.候补，代替者）；（v.交替）；（a.交替的，轮流的）
 - involve：涉及，包含，影响，加入
 - reside：居住于，定居于
-- sequence：序列
+- sequence：序列，顺序
 - extract：提取，摘录
 - indices：索引，标志（index的复数形式）
 - mimic：（v.模仿）；（a.模仿的）
@@ -143,3 +143,13 @@
 23.04.12
 
 - eliminate：消除，排除
+
+23.04.14
+
+- ordinary：普通的，平常的
+
+23.04.15
+
+- handy：方便的
+- defer：推迟，延期
+- minimal：最小的，极小的
