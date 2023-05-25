@@ -7,28 +7,27 @@
 void
 userinit(void)
 {
-  struct proc *p;
+    struct proc *p;
 
-  p = allocproc();			//xv6的第一个进程，其pid = 1
-  initproc = p;
-  
-  // allocate one user page and copy init's instructions
-  // and data into it.
-  uvminit(p->pagetable, initcode, sizeof(initcode));
-  p->sz = PGSIZE;
+    p = allocproc();			//xv6的第一个进程，其pid = 1
+    initproc = p;
 
-  // prepare for the very first "return" from kernel to user.
-  p->trapframe->epc = 0;      // user program counter
-  p->trapframe->sp = PGSIZE;  // user stack pointer
+    // allocate one user page and copy init's instructions
+    // and data into it.
+    uvminit(p->pagetable, initcode, sizeof(initcode));
+    p->sz = PGSIZE;
 
-  safestrcpy(p->name, "initcode", sizeof(p->name));
-  p->cwd = namei("/");
+    // prepare for the very first "return" from kernel to user.
+    p->trapframe->epc = 0;      // user program counter
+    p->trapframe->sp = PGSIZE;  // user stack pointer
 
-  p->state = RUNNABLE;
+    safestrcpy(p->name, "initcode", sizeof(p->name));
+    p->cwd = namei("/");
 
-  release(&p->lock);
+    p->state = RUNNABLE;
+
+    release(&p->lock);
 }
-
 ```
 
 ## alloproc函数
@@ -60,14 +59,14 @@ userinit(void)
 void
 uvminit(pagetable_t pagetable, uchar *src, uint sz)
 {
-  char *mem;
+    char *mem;
 
-  if(sz >= PGSIZE)
-    panic("inituvm: more than a page");
-  mem = kalloc();
-  memset(mem, 0, PGSIZE);
-  mappages(pagetable, 0, PGSIZE, (uint64)mem, PTE_W|PTE_R|PTE_X|PTE_U);
-  memmove(mem, src, sz);
+    if(sz >= PGSIZE)
+        panic("inituvm: more than a page");
+    mem = kalloc();
+    memset(mem, 0, PGSIZE);
+    mappages(pagetable, 0, PGSIZE, (uint64)mem, PTE_W|PTE_R|PTE_X|PTE_U);
+    memmove(mem, src, sz);
 }
 ```
 
@@ -85,12 +84,12 @@ uvminit(pagetable_t pagetable, uchar *src, uint sz)
 
 ```cpp
 struct run {
-  struct run *next;
+    struct run *next;
 };
 
 struct {
-  struct spinlock lock;
-  struct run *freelist;
+    struct spinlock lock;
+    struct run *freelist;
 } kmem;
 ```
 
@@ -100,7 +99,7 @@ struct {
 
 综上可以发现，原来`kalloc()`74-76行是**为了找到一个可用的内存块并返回！**
 
-[todo-fi][]在这里我又有疑问了`(void*)`是什么意义，为什么这里的`r`就一定是PGSIZE呢？为什么84行又要转化为`(char*)`呢？
+[todo-finished][]在这里我又有疑问了`(void*)`是什么意义，为什么这里的`r`就一定是PGSIZE呢？为什么84行又要转化为`(char*)`呢？
 
 - A：`(void*)`是一个未知类型的指针，可以指向任何类型的数据，可以显示或隐式地转换为其他类型的指针，以便程序中访问所分配的内存块！
 
@@ -118,32 +117,32 @@ PS：可能这里会有人对`panic`有疑问，这个函数就是用来报错�
 int
 mappages(pagetable_t pagetable, uint64 va, uint64 size, uint64 pa, int perm)
 {
-  uint64 a, last;
-  pte_t *pte;
+    uint64 a, last;
+    pte_t *pte;
 
-  if(size == 0)
-    panic("mappages: size");
-  
-  a = PGROUNDDOWN(va);
-  // 这里a得到的是PPN+12位的0
-  last = PGROUNDDOWN(va + size - 1);
-  // 这里last(原来的va再加上12位的1,然后再PGROUNDDOWN运算)
-  // last 表示本次映射的最后一个虚拟地址
-  // 如果va一开始的偏移量就是12个0, 那么last就等于a !!!
-  // 但是如果一开始va不是规律的(va的偏移量不是12个0),那么a != last,last = a + PGSIZE
-  for(;;){
-    if((pte = walk(pagetable, a, 1)) == 0)
-      return -1;
-    if(*pte & PTE_V)
-      panic("mappages: remap");
-    // perm就是像PTE_()一样的东西，并且可能不止一个，比如说PTE_R|PTE_W
-    *pte = PA2PTE(pa) | perm | PTE_V;
-    if(a == last)
-      break;
-    a += PGSIZE;
-    pa += PGSIZE;
-  }
-  return 0;
+    if(size == 0)
+        panic("mappages: size");
+
+    a = PGROUNDDOWN(va);
+    // 这里a得到的是PPN+12位的0
+    last = PGROUNDDOWN(va + size - 1);
+    // 这里last(原来的va再加上12位的1,然后再PGROUNDDOWN运算)
+    // last 表示本次映射的最后一个虚拟地址
+    // 如果va一开始的偏移量就是12个0, 那么last就等于a !!!
+    // 但是如果一开始va不是规律的(va的偏移量不是12个0),那么a != last,last = a + PGSIZE
+    for(;;){
+        if((pte = walk(pagetable, a, 1)) == 0)
+            return -1;
+        if(*pte & PTE_V)
+            panic("mappages: remap");
+        // perm就是像PTE_()一样的东西，并且可能不止一个，比如说PTE_R|PTE_W
+        *pte = PA2PTE(pa) | perm | PTE_V;
+        if(a == last)
+            break;
+        a += PGSIZE;
+        pa += PGSIZE;
+    }
+    return 0;
 }
 ```
 
@@ -185,23 +184,23 @@ mappages(pagetable_t pagetable, uint64 va, uint64 size, uint64 pa, int perm)
 pte_t *
 walk(pagetable_t pagetable, uint64 va, int alloc)
 {
-  if(va >= MAXVA)
-    panic("walk");
+    if(va >= MAXVA)
+        panic("walk");
 
-  for(int level = 2; level > 0; level --) {
-    // 求得该级页表的PTE
-    pte_t *pte = &pagetable[PX(level, va)];
-    if(*pte & PTE_V) {
-      pagetable = (pagetable_t)PTE2PA(*pte);
-    } else {
-      if(!alloc || (pagetable = (pde_t*)kalloc()) == 0)
-        return 0;
-      memset(pagetable, 0, PGSIZE);
-      // 给一个valid的标识
-      *pte = PA2PTE(pagetable) | PTE_V;
+    for(int level = 2; level > 0; level --) {
+        // 求得该级页表的PTE
+        pte_t *pte = &pagetable[PX(level, va)];
+        if(*pte & PTE_V) {
+            pagetable = (pagetable_t)PTE2PA(*pte);
+        } else {
+            if(!alloc || (pagetable = (pde_t*)kalloc()) == 0)
+                return 0;
+            memset(pagetable, 0, PGSIZE);
+            // 给一个valid的标识
+            *pte = PA2PTE(pagetable) | PTE_V;
+        }
     }
-  }
-  return &pagetable[PX(0, va)];
+    return &pagetable[PX(0, va)];
 }
 ```
 

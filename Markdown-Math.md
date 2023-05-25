@@ -1,6 +1,8 @@
 # Markdown数学公式
 
-## 1\. 希腊字母表
+---
+
+## 1. 希腊字母表
 
 | 符号 | 代码        | 符号       | 代码      |
 | ---- | ----------- | ---------- | --------- |
@@ -32,11 +34,11 @@
 | ∂    | \\partial   |            |           |
 | ξ    | \\xi        |            |           |
 
-## 2\. 希腊字母
+## 2. 希腊字母
 
 ![在这里插入图片描述](https://img-blog.csdnimg.cn/58806f8aa1244621a311981b3e600a59.png?x-oss-process=image/watermark,type_ZmFuZ3poZW5naGVpdGk,shadow_10,text_aHR0cHM6Ly9ibG9nLmNzZG4ubmV0L0RhcmxpbmdxaWFuZw==,size_16,color_FFFFFF,t_70)
 
-## 3\. 数学符号表
+## 3. 数学符号表
 
 | **描述**   | **符号**                                                  | **代码**                                                     |
 | ---------- | --------------------------------------------------------- | ------------------------------------------------------------ |
@@ -108,11 +110,11 @@
 | 字 母      | $\pmb{字母}$                                              | \pmb{字母}                                                   |
 | 加粗倾斜   | $\boldsymbol{字母}$                                       | \\boldsymbol{字母}                                           |
 
-## 4\. 数学符号
+## 4. 数学符号
 
 ![在这里插入图片描述](https://img-blog.csdnimg.cn/d6743e8262a0429e9dcd964f43ae0de9.png?x-oss-process=image/watermark,type_ZmFuZ3poZW5naGVpdGk,shadow_10,text_aHR0cHM6Ly9ibG9nLmNzZG4ubmV0L0RhcmxpbmdxaWFuZw==,size_16,color_FFFFFF,t_70)
 
-## 5\. 数学符号补充表
+## 5. 数学符号补充表
 
 | 描述     | 符号 | 代码 |
 | -------- | ---- | ---- |
@@ -161,7 +163,7 @@ c(u)=\begin{cases} \sqrt\frac{1}{N}，u=0\\ \sqrt\frac{2}{N}， u\neq0\end{cases
 
 $$c(u)=\begin{cases} \sqrt\frac{1}{N}，u=0\\ \sqrt\frac{2}{N}， u\neq0\end{cases}  $$
 
-## 6\. 数学符号补充
+## 6. 数学符号补充
 
 ![在这里插入图片描述](https://img-blog.csdnimg.cn/4555e3542d3942ddba1783159165cf36.png?x-oss-process=image/watermark,type_ZmFuZ3poZW5naGVpdGk,shadow_10,text_aHR0cHM6Ly9ibG9nLmNzZG4ubmV0L0RhcmxpbmdxaWFuZw==,size_16,color_FFFFFF,t_70)  
 ![在这里插入图片描述](https://img-blog.csdnimg.cn/b9e8c03da94d4aadb354d6de022e42c9.png?x-oss-process=image/watermark,type_ZmFuZ3poZW5naGVpdGk,shadow_10,text_aHR0cHM6Ly9ibG9nLmNzZG4ubmV0L0RhcmxpbmdxaWFuZw==,size_16,color_FFFFFF,t_70)
